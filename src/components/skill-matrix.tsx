@@ -1,0 +1,61 @@
+import type { SkillMatrixRow } from "@/lib/scheduling/store";
+
+const STATIONS = [
+  { key: "food", label: "Food" },
+  { key: "drink", label: "Drinks" },
+  { key: "cs", label: "Customer service" },
+] as const;
+
+function skillClass(score: number | null) {
+  if (score === null) return "bg-zinc-900 text-zinc-400";
+  if (score >= 0.8) return "bg-emerald-700/70 text-white";
+  if (score >= 0.5) return "bg-amber-700/60 text-white";
+  return "bg-red-900/60 text-white";
+}
+
+/** Heat map of mastery per employee and station. Text values are shown, not just colour. */
+export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+        <caption className="sr-only">Team skills by station</caption>
+        <thead>
+          <tr>
+            <th scope="col" className="border border-violet-900 p-2">
+              Employee
+            </th>
+            {STATIONS.map((s) => (
+              <th key={s.key} scope="col" className="border border-violet-900 p-2">
+                {s.label}
+              </th>
+            ))}
+            <th scope="col" className="border border-violet-900 p-2">
+              Hours
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <th scope="row" className="border border-violet-900 p-2 font-medium">
+                {row.name}
+                {row.isNew && <span className="ml-2 rounded bg-violet-800 px-1.5 py-0.5 text-xs">new</span>}
+              </th>
+              {STATIONS.map((s) => {
+                const score = row.skills[s.key];
+                return (
+                  <td key={s.key} className={`border border-violet-900 p-2 ${skillClass(score)}`}>
+                    {score === null ? "Not started" : `${Math.round(score * 100)}%${score >= 0.8 ? " certified" : ""}`}
+                  </td>
+                );
+              })}
+              <td className="border border-violet-900 p-2">
+                {row.hoursScheduled}/{row.hoursCap}h
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

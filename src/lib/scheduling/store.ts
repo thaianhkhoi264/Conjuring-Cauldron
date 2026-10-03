@@ -1,8 +1,9 @@
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { assignments, availability, employees, mastery, shifts } from "@/lib/db/schema";
 import type { StationRequirements } from "@/lib/db/types";
+import { SLOT_HOURS } from "@/lib/slots";
 import { generateSchedule } from "./engine";
 import { buildScheduleInput } from "./input";
 import type { EngineAssignment, ScheduleInput, ScheduleResult } from "./types";
@@ -90,4 +91,39 @@ export function getScheduleView(): ScheduleViewShift[] {
           a.role.localeCompare(b.role),
       ),
     }));
+}
+
+export type SkillMatrixRow = {
+  id: string;
+  name: string;
+  isNew: boolean;
+  hoursCap: number;
+  hoursScheduled: number;
+  /** null = not started */
+  skills: Record<"food" | "drink" | "cs", number | null>;
+};
+
+/** Staff with their mastery per station and scheduled hours, for the manager's team view. */
+export function getSkillMatrix(): SkillMatrixRow[] {
+  const staff = db.select().from(employees).where(eq(employees.role, "employee")).all();
+  const masteryRows = db.select().from(mastery).all();
+  const hours = new Map<string, number>();
+  for (const a of db.select().from(assignments).all()) {
+    if (a.status === "called_off") continue;
+    hours.set(a.employeeId, (hours.get(a.employeeId) ?? 0) + SLOT_HOURS);
+  }
+  return staff
+    .map((e) => {
+      const skills: SkillMatrixRow["skills"] = { food: null, drink: null, cs: null };
+      for (const m of masteryRows) if (m.employeeId === e.id) skills[m.station] = m.score;
+      return {
+        id: e.id,
+        name: e.name,
+        isNew: e.isNew,
+        hoursCap: e.hoursCapWeekly,
+        hoursScheduled: hours.get(e.id) ?? 0,
+        skills,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
