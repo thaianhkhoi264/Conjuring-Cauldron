@@ -6,10 +6,13 @@ import { attempts, demoClock, mastery } from "@/lib/db/schema";
 import type { Station } from "@/lib/db/types";
 
 export const CERTIFICATION_THRESHOLD = 0.8;
-const NEW_WEIGHT = 0.6;
+const NEW_WEIGHT = 0.5;
 
-export function currentDemoTime() {
-  return db.select().from(demoClock).where(eq(demoClock.id, 1)).get()?.now ?? new Date().toISOString();
+/** The shared `db` or the transaction handle passed to `db.transaction` callbacks. */
+export type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export function currentDemoTime(executor: DbExecutor = db) {
+  return executor.select().from(demoClock).where(eq(demoClock.id, 1)).get()?.now ?? new Date().toISOString();
 }
 
 /**
@@ -17,12 +20,21 @@ export function currentDemoTime() {
  * shared boundary Agent A's evaluator calls (`applyScore(employeeId, "cs", score, source)`).
  * It does not write an attempt row: callers record their own attempt, or use
  * `recordAttempt` below.
+ *
+ * Pass a transaction handle as `executor` to make the mastery update atomic
+ * with the caller's own writes (for example the stored rubric and attempt).
  */
-export function applyScore(employeeId: string, station: Station, rawScore: number, _source?: string) {
+export function applyScore(
+  employeeId: string,
+  station: Station,
+  rawScore: number,
+  _source?: string,
+  executor: DbExecutor = db,
+) {
   const score = Math.min(1, Math.max(0, rawScore));
-  const now = currentDemoTime();
+  const now = currentDemoTime(executor);
 
-  const existing = db
+  const existing = executor
     .select()
     .from(mastery)
     .where(and(eq(mastery.employeeId, employeeId), eq(mastery.station, station)))
@@ -33,12 +45,12 @@ export function applyScore(employeeId: string, station: Station, rawScore: numbe
     : score;
 
   if (existing) {
-    db.update(mastery)
+    executor.update(mastery)
       .set({ score: next, attempts: existing.attempts + 1, lastTrainedAt: now })
       .where(eq(mastery.id, existing.id))
       .run();
   } else {
-    db.insert(mastery)
+    executor.insert(mastery)
       .values({ id: randomUUID(), employeeId, station, score: next, attempts: 1, lastTrainedAt: now })
       .run();
   }
@@ -55,25 +67,33 @@ export type RecordAttemptInput = {
   recipeId?: string;
 };
 
-/** Food/drink path: store the attempt, then update mastery. */
+/** Food/drink path: store the attempt and update mastery in one transaction. */
 export function recordAttempt(input: RecordAttemptInput) {
   const score = Math.min(1, Math.max(0, input.score));
-  db.insert(attempts)
-    .values({
-      id: randomUUID(),
-      employeeId: input.employeeId,
-      station: input.station,
-      recipeId: input.recipeId,
-      score,
-      feedbackJson: JSON.stringify(input.feedback),
-      durationSeconds: Math.round(input.durationSeconds ?? 0),
-      createdAt: currentDemoTime(),
-    })
-    .run();
-  return applyScore(input.employeeId, input.station, score, `recipe:${input.recipeId ?? "unknown"}`);
+  return db.transaction((tx) => {
+    tx.insert(attempts)
+      .values({
+        id: randomUUID(),
+        employeeId: input.employeeId,
+        station: input.station,
+        recipeId: input.recipeId,
+        score,
+        feedbackJson: JSON.stringify(input.feedback),
+        durationSeconds: Math.round(input.durationSeconds ?? 0),
+        createdAt: currentDemoTime(tx),
+      })
+      .run();
+    return applyScore(input.employeeId, input.station, score, `recipe:${input.recipeId ?? "unknown"}`, tx);
+  });
 }
 
 /** Void-returning wrapper that satisfies Agent A's `ScoreApplier` type in src/voice/evaluator.ts. */
-export function scoreApplier(employeeId: string, station: Station, score: number, source: string): void {
-  applyScore(employeeId, station, score, source);
+export function scoreApplier(
+  employeeId: string,
+  station: Station,
+  score: number,
+  source: string,
+  executor?: DbExecutor,
+): void {
+  applyScore(employeeId, station, score, source, executor);
 }
