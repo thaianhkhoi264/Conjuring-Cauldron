@@ -109,7 +109,7 @@ export function getSkillMatrix(): SkillMatrixRow[] {
   const masteryRows = db.select().from(mastery).all();
   const hours = new Map<string, number>();
   for (const a of db.select().from(assignments).all()) {
-    if (a.status === "called_off") continue;
+    if (a.status !== "scheduled") continue;
     hours.set(a.employeeId, (hours.get(a.employeeId) ?? 0) + SLOT_HOURS);
   }
   return staff
