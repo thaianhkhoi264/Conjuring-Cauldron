@@ -49,7 +49,7 @@ Owns everything about the voice call.
 - **CS evaluator:** transcript to rubric scores as structured JSON, then update `mastery` for station `cs`
 - Customer Service chapter UI (call screen with live transcript, post-call feedback card)
 - Stretch: attach a real phone number to the same assistant
-- **Fallback asset:** record a sample call and its transcript for the demo if the live call fails
+- **Fallback asset:** deterministic on-screen replay of a sample call transcript for the demo if the live call fails; it follows the same scoring path as a live call. A recorded audio call is optional polish, not a demo dependency.
 
 ### Agent B: Everything Else
 *(This plan is maintained from Agent B's side. Agent B also owns the shared `src/lib/llm.ts` Gemini helper, set up in hour 0-1.)*
@@ -225,7 +225,7 @@ The persona stays in character and ends the call naturally after resolution or a
 | 0 - 1 | Create schema, seed loader, push. Repo scaffold. | Google Cloud setup (project, Vertex AI or Gemini API key, `.env`), `src/lib/llm.ts` helper pushed. Pull schema. Auth shell, layouts, routes. |
 | 1 - 4 | Vapi setup, persona prompt, browser call working end to end, webhook stores transcript | Seed script (recipes, employees, shifts). Food/Drink drag-and-drop UI. |
 | 4 - 8 | CS rubric evaluator, `applyScore` integration, call UI and feedback card | LLM judge, mastery, certification, evaluation report |
-| 8 - 12 | Scenarios 2 to 4, polish, record fallback call, test failure modes | Scheduling engine with hard rules and soft scoring, manager grid |
+| 8 - 12 | Scenarios 2 to 4, polish, verify deterministic fallback replay, test failure modes | Scheduling engine with hard rules and soft scoring, manager grid |
 | 12 - 16 | Support B: end-to-end testing of the new-hire flow, bug fixes | Scheduler agent with tools, call-off routing, manager inbox |
 | 16 - 19 | Stretch: real phone number. Else employee chatbot | Skip Ahead, decay, retests, chatbot or polish |
 | 19 - 22 | Joint: integration, bug bash, seed reset, UI polish | Same |
@@ -242,13 +242,13 @@ The persona stays in character and ends the call naturally after resolution or a
 5. **Call-off:** Elowen calls off a close shift. The manager inbox shows ranked replacements with rationales; one click on Approve, and the replacement is notified.
 6. **Skip Ahead 3 days:** skills decay, retests appear, and the schedule adjusts. Close with the loop: train, evaluate, schedule, repeat.
 
-**Fallback plan:** if the live voice call fails, play the recorded call and show its stored transcript scoring live.
+**Fallback plan:** if the live voice call fails, replay the deterministic sample transcript and show it scoring through the same stored-transcript path.
 
 ## 10. Risks and mitigations
 
 | Risk | Mitigation |
 |---|---|
-| Live voice fails (network or venue noise) | Recorded fallback call. Test the mic early. Use a headset. |
+| Live voice fails (network or venue noise) | Deterministic fallback transcript replay. Test the mic early. Use a headset. |
 | LLM score inconsistency | Fixed rubric, temperature 0, structured JSON, store once, never regenerate. |
 | LLM proposes an invalid schedule | All changes pass `validate_schedule`; the engine is the source of truth. |
 | Merge conflicts between agents | Separate directories, a shared schema pushed in hour 1, small commits, rebase before pushing. |
@@ -271,6 +271,7 @@ Shared coordination record. Each completed implementation step is committed and 
 - [x] **Agent A · Hour 0-1 · Database foundation** — Drizzle schema, SQLite runtime, initial migration, and resettable seed loader are in `src/lib/db/`; verified with migration, seed, and TypeScript checks. (`4d24b76`, `43a9819`)
 - [x] **Agent A · Hour 1-4 · Voice session lifecycle** — Four witch-customer scenarios, Vapi browser adapter, call-session API, transcript webhook, and deterministic demo fallback are in `src/voice/` and `src/app/api/voice/`. Live Vapi credentials and a reachable webhook URL remain environment setup. (`ab46f43`)
 - [x] **Agent A · Hour 4-8 · Customer Service evaluation** — Fixed weighted rubric, single-write result storage, attempt persistence, `applyScore` integration boundary, and feedback card are in `src/voice/`; verified with TypeScript and deterministic rubric checks. (`2cf2c54`)
+- [x] **Agent A · Hour 8-12 · Voice resilience** — Added a deterministic fallback-call replay that uses the same transcript format and scoring path as live Vapi calls, plus `verify:voice` coverage for invalid scenarios, missing Vapi credentials, rejected webhooks, persisted transcripts, and completed-call state. Added `/api/voice/evaluate`, wired to the shared Gemini helper and mastery scorer. Verified with TypeScript, production build, and voice lifecycle checks.
 - [x] **Agent B · Hour 0-1 · App scaffold, Gemini helper, mastery boundary** — Next.js shell (`next.config.ts`, Tailwind/PostCSS, `src/app/`), added `@dnd-kit/core` and `@google/genai`, `.env.example` extended with Gemini/Vertex vars. `src/lib/llm.ts` exports `generateJson`, `generateJsonFromSchema(schema, prompt)` (matches Agent A's `JsonGenerator`) and `runAgent` (function-calling loop). `src/lib/mastery.ts` exports `applyScore(employeeId, station, score, source)` (mastery only, 0.6/0.4 blend, certified at 0.8), `recordAttempt` (attempt + mastery, for food/drink) and `scoreApplier` (void wrapper for Agent A's `ScoreApplier`). Verified with `tsc` and `next build`. **Agent A:** pass `generateJsonFromSchema` and `scoreApplier` into `evaluateCustomerServiceSession`; set `GEMINI_API_KEY`, `GEMINI_FAST_MODEL`, `GEMINI_PRO_MODEL` in `.env.local`. Please don't edit `package.json` without pulling first.
 - [ ] **Agent B · Next · Seed content** — recipes, employees, availability, shifts in `scripts/seed.ts`, then Food/Drinks chapters.
 - [ ] Skip Ahead advances 3 days, decays skills and triggers retests
