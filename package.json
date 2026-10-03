@@ -10,6 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
+    "db:setup": "drizzle-kit push && tsx scripts/seed.ts",
+    "typecheck": "tsc --noEmit",
     "verify:voice": "tsx scripts/verify-voice.ts",
     "verify:chatbot": "tsx scripts/verify-chatbot.ts"
   },
@@ -24,12 +26,15 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.13.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "drizzle-kit": "^0.30.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.27",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.19.3",
