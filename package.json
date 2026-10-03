@@ -13,7 +13,8 @@
     "db:setup": "drizzle-kit push && tsx scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "verify:voice": "tsx scripts/verify-voice.ts",
-    "verify:chatbot": "tsx scripts/verify-chatbot.ts"
+    "verify:chatbot": "tsx scripts/verify-chatbot.ts",
+    "verify:training": "tsx scripts/verify-training.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
