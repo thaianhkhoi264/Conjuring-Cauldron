@@ -6,7 +6,7 @@ import { attempts, demoClock, mastery } from "@/lib/db/schema";
 import type { Station } from "@/lib/db/types";
 
 export const CERTIFICATION_THRESHOLD = 0.8;
-const NEW_WEIGHT = 0.6;
+const NEW_WEIGHT = 0.5;
 
 /** The shared `db` or the transaction handle passed to `db.transaction` callbacks. */
 export type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
