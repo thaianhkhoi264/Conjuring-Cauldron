@@ -30,8 +30,8 @@ AI that **trains, evaluates and schedules** food service employees. The demo res
 - **App:** Next.js (App Router) + TypeScript + Tailwind
 - **DB:** SQLite via Drizzle or Prisma (single file, zero setup, seeded)
 - **Drag and drop:** `@dnd-kit/core`
-- **LLM:** Anthropic API. Use structured outputs / tool use for all scoring. See the `claude-api` skill for current model IDs.
-- **Voice:** Vapi Web SDK (browser call, transcript webhook, can attach a phone number later). Fallback: ElevenLabs Conversational AI.
+- **LLM:** Google Cloud, **Gemini via Vertex AI** (or the Gemini API with an API key if Vertex setup takes too long). Use the `@google/genai` SDK. All scoring uses structured output (`responseMimeType: "application/json"` + `responseSchema`) and function calling for the scheduler agent and chatbot. Wrap calls in one helper, `src/lib/llm.ts` (`generateJson(schema, prompt)` and `runAgent(tools, prompt)`), so Agent A and Agent B share the same client and credentials. Use a fast Gemini Flash-class model for judging and chat, and a stronger Pro-class model for the scheduler agent if latency allows; check the current model IDs in the Google docs.
+- **Voice:** Vapi Web SDK (browser call, transcript webhook, can attach a phone number later), with **Gemini configured as Vapi's LLM** so everything stays on Google. Alternative if Vapi is a problem: Gemini Live API directly in the browser (more custom work). Agent A makes this call in hour 1-2.
 - **Scheduling engine:** plain TypeScript, greedy + local search (no external solver)
 - **Auth:** fake login. Pick a seeded user from a dropdown, with a role (`employee` or `manager`). No real auth needed.
 - **Notifications:** in-app inbox only (mock SMS to replacement shown in a toast)
@@ -46,12 +46,14 @@ Owns everything about the voice call.
 - Witch customer persona(s) and complaint scenarios (section 7)
 - Vapi assistant configuration (system prompt, voice, first message, end-of-call behavior)
 - Call session lifecycle: create the session, start the browser call, receive the transcript webhook, store the transcript
-- **CS evaluator:** transcript to rubric scores as structured JSON, then update `mastery.customer_service`
+- **CS evaluator:** transcript to rubric scores as structured JSON, then update `mastery` for station `cs`
 - Customer Service chapter UI (call screen with live transcript, post-call feedback card)
 - Stretch: attach a real phone number to the same assistant
 - **Fallback asset:** record a sample call and its transcript for the demo if the live call fails
 
 ### Agent B: Everything Else
+*(This plan is maintained from Agent B's side. Agent B also owns the shared `src/lib/llm.ts` Gemini helper, set up in hour 0-1.)*
+
 - DB schema, migrations and **seed data** (section 7). *Hour 1 priority.*
 - Login and role switching, employee and manager shells
 - Food and Drinks chapters (drag-and-drop UI plus LLM judge)
@@ -69,6 +71,8 @@ Owns everything about the voice call.
 
 ## 4. Data model (Agent A and B share this)
 
+**Source of truth:** `src/lib/db/schema.ts` (Drizzle) and `src/lib/db/types.ts`, added by Agent A. The sketch below is only a summary; if they differ, the code wins.
+
 ```
 employees(id, name, role[employee|manager], is_new, hours_cap_weekly, avatar, created_at)
 availability(employee_id, day_of_week 0-6, start_time, end_time)
@@ -79,7 +83,7 @@ call_sessions(id, employee_id, scenario_id, transcript_json, rubric_json, score,
 shifts(id, date, slot[open|mid|close], required_json {food:n, drink:n, cs:n})
 assignments(id, shift_id, employee_id, station, role[anchor|shadow], status[scheduled|called_off|covered])
 calloffs(id, assignment_id, reason, status[open|resolved], created_at)
-callof_candidates(id, calloff_id, employee_id, rank, rationale, status[proposed|approved|declined|accepted])
+calloff_candidates(id, calloff_id, employee_id, rank, rationale, status[proposed|approved|declined|accepted])
 demo_clock(now)  -- single row, advanced by Skip Ahead
 messages(id, employee_id, kind, body, read, created_at)
 ```
@@ -218,7 +222,7 @@ The persona stays in character and ends the call naturally after resolution or a
 
 | Hour | Agent A (Call logic) | Agent B (Everything else) |
 |---|---|---|
-| 0 - 1 | Create schema, seed loader, push. Repo scaffold. | Pull schema. Auth shell, layouts, routes. |
+| 0 - 1 | Create schema, seed loader, push. Repo scaffold. | Google Cloud setup (project, Vertex AI or Gemini API key, `.env`), `src/lib/llm.ts` helper pushed. Pull schema. Auth shell, layouts, routes. |
 | 1 - 4 | Vapi setup, persona prompt, browser call working end to end, webhook stores transcript | Seed script (recipes, employees, shifts). Food/Drink drag-and-drop UI. |
 | 4 - 8 | CS rubric evaluator, `applyScore` integration, call UI and feedback card | LLM judge, mastery, certification, evaluation report |
 | 8 - 12 | Scenarios 2 to 4, polish, record fallback call, test failure modes | Scheduling engine with hard rules and soft scoring, manager grid |
@@ -248,6 +252,7 @@ The persona stays in character and ends the call naturally after resolution or a
 | LLM score inconsistency | Fixed rubric, temperature 0, structured JSON, store once, never regenerate. |
 | LLM proposes an invalid schedule | All changes pass `validate_schedule`; the engine is the source of truth. |
 | Merge conflicts between agents | Separate directories, a shared schema pushed in hour 1, small commits, rebase before pushing. |
+| Google Cloud auth/quota problems | Set up credentials in hour 0-1 and smoke-test one call. Keep a Gemini API key as a fallback to Vertex. Never commit keys (`.env` in `.gitignore`). |
 | Slow LLM calls in the demo | Precompute and cache seed data. Show loading states. Keep prompts short. |
 | Fairness concerns about skill-based scheduling | Hour-fairness term in the scoring, trainees get shadow slots, and the report is transparent about how scores are computed. Mention it in the pitch. |
 
