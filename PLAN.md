@@ -263,6 +263,14 @@ The persona stays in character and ends the call naturally after resolution or a
 - [ ] Evaluation report shows strengths, weaknesses, needs improvement and can work now
 - [ ] Manager sees a valid generated schedule that respects every hard rule
 - [ ] Call-off produces ranked replacements and one-click approval, with decline fallback
+
+## 12. Progress log
+
+Shared coordination record. Each completed implementation step is committed and pushed with this file updated.
+
+- [x] **Agent A · Hour 0-1 · Database foundation** — Drizzle schema, SQLite runtime, initial migration, and resettable seed loader are in `src/lib/db/`; verified with migration, seed, and TypeScript checks. (`4d24b76`, `43a9819`)
+- [x] **Agent A · Hour 1-4 · Voice session lifecycle** — Four witch-customer scenarios, Vapi browser adapter, call-session API, transcript webhook, and deterministic demo fallback are in `src/voice/` and `src/app/api/voice/`. Live Vapi credentials and a reachable webhook URL remain environment setup. (`ab46f43`)
+- [x] **Agent A · Hour 4-8 · Customer Service evaluation** — Fixed weighted rubric, single-write result storage, attempt persistence, `applyScore` integration boundary, and feedback card are in `src/voice/`; verified with TypeScript and deterministic rubric checks. (`2cf2c54`)
 - [ ] Skip Ahead advances 3 days, decays skills and triggers retests
 - [ ] Seed and Reset Demo reproduce the demo state every time
 - [ ] Demo rehearsed 3 times, fallback recording ready
