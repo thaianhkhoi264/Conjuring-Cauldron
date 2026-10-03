@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { callSessions } from "@/lib/db/schema";
+import { currentDemoTime } from "@/lib/mastery";
 import type { TranscriptTurn } from "@/lib/db/types";
 import { extractTranscript, mergeTranscript } from "@/voice/transcript";
 
@@ -25,7 +26,7 @@ function getSessionId(body: WebhookBody) {
 
 export async function POST(request: Request) {
   const secret = process.env.VAPI_WEBHOOK_SECRET;
-  if (secret && request.headers.get("x-conjuring-voice-secret") !== secret) {
+  if (!secret || request.headers.get("x-conjuring-voice-secret") !== secret) {
     return NextResponse.json({ error: "Unauthorized webhook." }, { status: 401 });
   }
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   db.update(callSessions)
     .set({
       transcriptJson: JSON.stringify(transcript),
-      ...(messageType === "end-of-call-report" ? { endedAt: new Date().toISOString() } : {}),
+      ...(messageType === "end-of-call-report" ? { endedAt: currentDemoTime() } : {}),
     })
     .where(eq(callSessions.id, sessionId))
     .run();

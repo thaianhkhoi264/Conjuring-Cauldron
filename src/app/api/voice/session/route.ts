@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { callSessions, employees } from "@/lib/db/schema";
+import { currentDemoTime } from "@/lib/mastery";
 import { getVoiceScenario } from "@/voice/scenarios";
 import { createVapiSessionConfig } from "@/voice/vapi";
 
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     id: sessionId,
     employeeId: employee.id,
     scenarioId: scenario.id,
-    startedAt: new Date().toISOString(),
+    startedAt: currentDemoTime(),
   }).run();
 
   return NextResponse.json({
