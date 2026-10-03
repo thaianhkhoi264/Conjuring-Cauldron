@@ -1,0 +1,11 @@
+import { redirect } from "next/navigation";
+
+import { getCurrentUser, type SessionUser } from "@/lib/session";
+
+/** For employee pages: sign-in required; managers are sent to their own home. */
+export async function requireEmployee(): Promise<SessionUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role === "manager") redirect("/manager");
+  return user;
+}
