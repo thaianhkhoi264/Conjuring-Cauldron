@@ -12,6 +12,8 @@
     "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@google/genai": "^2.27.0",
     "@vapi-ai/web": "^2.7.1",
     "better-sqlite3": "^11.8.1",
     "drizzle-orm": "^0.40.0",
@@ -20,11 +22,14 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.13.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "drizzle-kit": "^0.30.4",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

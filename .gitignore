@@ -6,3 +6,4 @@ node_modules/
 *.db-journal
 .env
 .env.local
+next-env.d.ts
