@@ -1,7 +1,9 @@
+import { CalloffInbox } from "@/components/calloff-inbox";
 import { GenerateScheduleButton } from "@/components/generate-schedule-button";
 import { ScheduleGrid } from "@/components/schedule-grid";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SkillMatrix } from "@/components/skill-matrix";
+import { listOpenCalloffs } from "@/lib/calloffs";
 import { requireManager } from "@/lib/require-user";
 import { getScheduleView, getSkillMatrix } from "@/lib/scheduling/store";
 
@@ -11,6 +13,7 @@ export default async function ManagerHome() {
   const user = await requireManager();
   const shifts = getScheduleView();
   const matrix = getSkillMatrix();
+  const calloffs = listOpenCalloffs();
   const hasSchedule = shifts.some((s) => s.assignments.length > 0);
 
   return (
@@ -19,6 +22,13 @@ export default async function ManagerHome() {
         <h1 className="text-2xl font-bold">Manager: {user.name}</h1>
         <SignOutButton />
       </header>
+
+      <section className="flex flex-col gap-3" aria-labelledby="calloffs-heading">
+        <h2 id="calloffs-heading" className="text-xl font-semibold">
+          Call-off inbox
+        </h2>
+        <CalloffInbox items={calloffs} />
+      </section>
 
       <section className="flex flex-col gap-4" aria-labelledby="schedule-heading">
         <div className="flex flex-wrap items-start justify-between gap-4">

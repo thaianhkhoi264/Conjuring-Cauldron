@@ -19,11 +19,14 @@ function Cell({ shift }: { shift: ScheduleViewShift | undefined }) {
   if (!shift) return <td className="border border-violet-900 p-2" />;
 
   const rows = STATIONS.flatMap((station) => {
-    const anchors = shift.assignments.filter((a) => a.station === station && a.role === "anchor");
-    const shadows = shift.assignments.filter((a) => a.station === station && a.role === "shadow");
+    const inStation = shift.assignments.filter((a) => a.station === station);
+    const anchors = inStation.filter((a) => a.role === "anchor" && a.status === "scheduled");
+    const shadows = inStation.filter((a) => a.role === "shadow" && a.status === "scheduled");
+    const off = inStation.filter((a) => a.status !== "scheduled");
     const missing = Math.max(0, shift.required[station] - anchors.length);
     return [
-      ...anchors.map((a) => ({ key: a.id, station, text: a.employeeName, kind: a.status === "called_off" ? "off" : "anchor" })),
+      ...off.map((a) => ({ key: a.id, station, text: a.employeeName, kind: "off" })),
+      ...anchors.map((a) => ({ key: a.id, station, text: a.employeeName, kind: "anchor" })),
       ...shadows.map((a) => ({ key: a.id, station, text: a.employeeName, kind: "shadow" })),
       ...Array.from({ length: missing }, (_, i) => ({ key: `${shift.id}-${station}-gap-${i}`, station, text: "Needs cover", kind: "gap" })),
     ];

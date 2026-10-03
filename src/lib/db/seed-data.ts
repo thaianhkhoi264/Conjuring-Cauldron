@@ -129,7 +129,10 @@ const staff: StaffDef[] = [
   { id: "odette", name: "Odette", role: "employee", isNew: false, cap: 36, avatar: "🦉", skills: { food: 0.84, drink: 0.8, cs: 0.82 }, windows: [{ days: ALL, start: "07:00", end: "21:00" }] },
   { id: "isolde", name: "Isolde", role: "employee", isNew: false, cap: 28, avatar: "🕯️", skills: { food: 0.83, drink: 0.5, cs: 0.81 }, windows: [{ days: [3, 4, 5, 6, 0], start: "07:00", end: "21:00" }] },
   { id: "juniper", name: "Juniper", role: "employee", isNew: false, cap: 24, avatar: "🌿", skills: { food: 0.55, drink: 0.84, cs: 0.52 }, windows: [{ days: WEEKDAYS, start: "07:00", end: "21:00" }] },
-  { id: "corvin", name: "Corvin", role: "employee", isNew: false, cap: 24, avatar: "🪄", skills: { food: 0.81, drink: 0.45, cs: 0.84 }, windows: [{ days: [6, 0, 1], start: "07:00", end: "21:00" }] },
+  { id: "corvin", name: "Corvin", role: "employee", isNew: false, cap: 28, avatar: "🪄", skills: { food: 0.81, drink: 0.45, cs: 0.84 }, windows: [{ days: [6, 0, 1, 2], start: "07:00", end: "21:00" }] },
+  { id: "sorrel", name: "Sorrel", role: "employee", isNew: false, cap: 24, avatar: "🍄", skills: { food: 0.86, drink: 0.82, cs: 0.55 }, windows: [{ days: [1, 2, 3, 4, 5], start: "15:00", end: "21:00" }, { days: [6, 0], start: "07:00", end: "21:00" }] },
+  { id: "briar", name: "Briar", role: "employee", isNew: false, cap: 24, avatar: "🌹", skills: { food: 0.55, drink: 0.81, cs: 0.83 }, windows: [{ days: [2, 3, 4, 5, 6], start: "07:00", end: "21:00" }] },
+  { id: "quill", name: "Quill", role: "employee", isNew: false, cap: 24, avatar: "🪶", skills: { food: 0.84, drink: 0.5, cs: 0.82 }, windows: [{ days: [4, 5, 6, 0, 1], start: "07:00", end: "21:00" }] },
   { id: "finch", name: "Finch", role: "employee", isNew: true, cap: 20, avatar: "🐣", skills: {}, windows: [{ days: ALL, start: "07:00", end: "21:00" }] },
   { id: "wren", name: "Wren", role: "employee", isNew: true, cap: 16, avatar: "🪶", skills: { food: 0.6 }, windows: [{ days: WEEKEND, start: "07:00", end: "21:00" }, { days: [1, 3, 5], start: "15:00", end: "21:00" }] },
 ];

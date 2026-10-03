@@ -369,3 +369,72 @@ export function generateSchedule(input: ScheduleInput): ScheduleResult {
     },
   };
 }
+
+export type ReplacementCandidate = {
+  employeeId: string;
+  name: string;
+  score: number;
+  hoursAfter: number;
+  hoursCap: number;
+  reasons: string[];
+};
+
+export type RankReplacementsOptions = {
+  /** Employees who must not be offered the shift (for example those who already declined). */
+  exclude?: string[];
+  limit?: number;
+};
+
+/**
+ * Rank who could cover an anchor slot that has just opened up.
+ *
+ * `assignments` must be the schedule WITHOUT the vacated assignment (and without any
+ * other called-off ones). Only employees who satisfy every hard rule are returned:
+ * certified for the station, available for the whole slot, free on that shift, under
+ * their hours cap and daily limit. Order follows the same soft scoring as the generator
+ * (fairness, skill, specialty spread, slack).
+ */
+export function rankReplacements(
+  input: ScheduleInput,
+  assignments: EngineAssignment[],
+  vacated: Demand,
+  options: RankReplacementsOptions = {},
+): ReplacementCandidate[] {
+  const threshold = thresholdOf(input);
+  const employees = [...input.employees].sort((a, b) => a.id.localeCompare(b.id));
+  const shifts = [...input.shifts];
+  const state = new State(new Map(shifts.map((s) => [s.id, s])));
+  for (const a of assignments) {
+    if (state.shiftById.has(a.shiftId)) state.add({ ...a });
+  }
+  const ctx: Context = {
+    employees,
+    employeeById: new Map(employees.map((e) => [e.id, e])),
+    threshold,
+    state,
+  };
+  const shift = state.shiftById.get(vacated.shiftId);
+  if (!shift) return [];
+
+  const excluded = new Set(options.exclude ?? []);
+  const scored = anchorCandidates(ctx, vacated)
+    .filter((e) => !excluded.has(e.id))
+    .map((e) => ({ employee: e, score: anchorScore(ctx, e, vacated) }))
+    .sort((a, b) => b.score - a.score || a.employee.id.localeCompare(b.employee.id));
+
+  const result: ReplacementCandidate[] = scored.slice(0, options.limit ?? 3).map(({ employee, score }) => {
+    const hoursNow = state.hoursOf(employee.id);
+    const hoursAfter = hoursNow + SLOT_HOURS;
+    const counts = specialtyCounts(ctx, employee, shift);
+    const reasons = [
+      `Certified for ${vacated.station} (${Math.round(employee.skills[vacated.station] * 100)}%).`,
+      `Available for the whole shift.`,
+      `${hoursAfter}/${employee.hoursCap}h this week with this shift (${Math.round((hoursAfter / employee.hoursCap) * 100)}% of cap).`,
+    ];
+    if (hoursAfter / employee.hoursCap > SLACK_RATIO) reasons.push("Close to their weekly cap.");
+    if (counts.shift + counts.day === 0 && specialty(employee, threshold)) reasons.push("Does not stack another specialist that day.");
+    if (counts.shift > 0) reasons.push("Another specialist with the same skill is on this shift.");
+    return { employeeId: employee.id, name: employee.name, score: Math.round(score * 100) / 100, hoursAfter, hoursCap: employee.hoursCap, reasons };
+  });
+  return result;
+}
