@@ -190,24 +190,29 @@ Drinks (station `drink`):
 5. **Witch's Brew Cold Brew:** cup, ice, cold brew, black cat vanilla, cream swirl
 6. **Elixir of Calm Tea:** cup, hot water, chamomile, honey, lemon slice
 
-### Employees (10, with varied skills for a good demo)
-| Name | New? | Food | Drink | CS | Notes |
-|---|---|---|---|---|---|
-| Morgana (manager) | no | - | - | - | manager login |
-| Elowen | no | 0.92 | 0.85 | 0.70 | all-rounder, the "carry" |
-| Rook | no | 0.88 | 0.40 | 0.55 | food specialist |
-| Bram | no | 0.35 | 0.90 | 0.50 | drink specialist |
-| Selene | no | 0.30 | 0.86 | 0.45 | drink specialist (tests the "not three drink-only" rule) |
-| Tamsin | no | 0.45 | 0.82 | 0.60 | drink specialist |
-| Hazel | no | 0.50 | 0.55 | 0.91 | CS specialist |
-| Odette | no | 0.84 | 0.80 | 0.82 | strong all-rounder |
-| Finch | yes | 0 | 0 | 0 | new hire, live-demo account |
-| Wren | yes | 0.60 | 0 | 0 | partially trained new hire |
+### Employees (12 staff + 1 manager, with varied skills for a good demo)
+Source of truth: `src/lib/db/seed-data.ts`. Capacity math showed 10 people could not cover a full week of 3 slots, so we have 12 staff.
 
-Each has availability rows (mixed full-week, weekend-only, evenings-only), hours caps of 20 to 40, and 2 to 3 past attempts so reports aren't empty.
+| Name | New? | Food | Drink | CS | Hours cap | Availability | Notes |
+|---|---|---|---|---|---|---|---|
+| Morgana (manager) | no | - | - | - | 40 | - | manager login |
+| Elowen | no | 0.92 | 0.85 | 0.70 | 40 | every day | all-rounder, the "carry" |
+| Rook | no | 0.88 | 0.40 | 0.55 | 30 | Mon-Fri | food specialist |
+| Bram | no | 0.35 | 0.90 | 0.50 | 24 | evenings | drink specialist |
+| Selene | no | 0.30 | 0.86 | 0.45 | 20 | weekends, Fri evening | drink specialist |
+| Tamsin | no | 0.45 | 0.82 | 0.60 | 24 | mornings | drink specialist |
+| Juniper | no | 0.55 | 0.84 | 0.52 | 24 | Mon-Fri | drink specialist (tests the "not three drink-only" rule) |
+| Hazel | no | 0.50 | 0.55 | 0.91 | 32 | Tue-Sat | CS specialist |
+| Odette | no | 0.84 | 0.80 | 0.82 | 36 | every day | strong all-rounder |
+| Isolde | no | 0.83 | 0.50 | 0.81 | 28 | Wed-Sun | food + CS |
+| Corvin | no | 0.81 | 0.45 | 0.84 | 24 | Sat, Sun, Mon | food + CS |
+| Finch | yes | - | - | - | 20 | every day | new hire, live-demo account |
+| Wren | yes | 0.60 | - | - | 16 | weekends, Mon/Wed/Fri evenings | partially trained new hire |
+
+Non-new staff have 2 past attempts per station and new hires have 1 (Wren only in Food), so reports are not empty. Day of week is 0 = Sunday ... 6 = Saturday; availability windows are 24h clock strings.
 
 ### Shifts
-Next 7 demo days, 3 slots per day (`open`, `mid`, `close`). Default requirement: 1 food, 1 drink, 1 CS per slot, with 2 per station on weekend `mid`.
+Next 7 demo days starting Sun 2026-10-04 (demo clock starts Sat 2026-10-03 09:00Z), 3 slots per day. Slot windows live in `src/lib/slots.ts` (`open` 07-11, `mid` 11-15, `close` 15-19, 4 hours each). Requirements: `open` is a prep shift (1 food, 1 drink, 0 cs, since the register opens at mid); `mid` and `close` need 1 food, 1 drink, 1 cs; weekend `mid` needs 2 food. No assignments are seeded; the manager generates the schedule.
 
 ### Witch customer persona (Agent A owns)
 A detailed system prompt for the voice assistant. It must cover: who the customers are (witches, covens, familiars), how they speak, what the restaurant sells (inject the recipe book), and house policies (refund/redo rules, no-refund on cursed items, comping rules) so the CS rubric has something to check against. Include 4 scenarios, picked at the start of each call:
@@ -275,7 +280,8 @@ Shared coordination record. Each completed implementation step is committed and 
 - [x] **Agent A · Hour 12-16 · New-hire voice-path integration** — Extended `verify:voice` to cover a new employee completing the Customer Service chapter end to end: session, fallback transcript, immutable rubric, attempt, first-score mastery certification, and a safe repeated evaluation. UI-level onboarding remains Agent B's integration surface.
 - [x] **Agent A · Hour 16-19 · Employee chatbot fallback** — Deferred the real-phone stretch because no Vapi phone configuration is present. Added a Gemini tool-calling employee assistant with recipe-book and employee-only schedule tools, plus confirmation-gated call-offs and a reusable chat panel. Verified the tool path with `verify:chatbot`, alongside voice checks and a production build.
 - [x] **Agent B · Hour 0-1 · App scaffold, Gemini helper, mastery boundary** — Next.js shell (`next.config.ts`, Tailwind/PostCSS, `src/app/`), added `@dnd-kit/core` and `@google/genai`, `.env.example` extended with Gemini/Vertex vars. `src/lib/llm.ts` exports `generateJson`, `generateJsonFromSchema(schema, prompt)` (matches Agent A's `JsonGenerator`) and `runAgent` (function-calling loop). `src/lib/mastery.ts` exports `applyScore(employeeId, station, score, source)` (mastery only, 0.6/0.4 blend, certified at 0.8), `recordAttempt` (attempt + mastery, for food/drink) and `scoreApplier` (void wrapper for Agent A's `ScoreApplier`). Verified with `tsc` and `next build`. **Agent A:** pass `generateJsonFromSchema` and `scoreApplier` into `evaluateCustomerServiceSession`; set `GEMINI_API_KEY`, `GEMINI_FAST_MODEL`, `GEMINI_PRO_MODEL` in `.env.local`. Please don't edit `package.json` without pulling first.
-- [ ] **Agent B · Next · Seed content** — recipes, employees, availability, shifts in `scripts/seed.ts`, then Food/Drinks chapters.
+- [x] **Agent B · Hour 1-4 · Seed content** — `src/lib/db/seed-data.ts` (`buildDemoSeed()`) holds 12 recipes, 13 people with skills/availability/caps, past attempts, 2 welcome messages and 21 open shifts; `scripts/seed.ts` now loads it via `npm run db:seed` (verified idempotent against a scratch DB: 13 employees, 12 recipes, 21 shifts, 61 attempts). Shared slot windows are in `src/lib/slots.ts`. Staff count grew from 10 to 12 for scheduling capacity. Demo accounts: `finch` (new, empty), `wren` (new, Food 0.6), `morgana` (manager). To get the DB locally: `npm run db:push` then `npm run db:seed`.
+- [ ] **Agent B · Next · Food/Drinks chapters** — drag-and-drop UI, LLM judge, login/role shell.
 - [ ] Skip Ahead advances 3 days, decays skills and triggers retests
 - [ ] Seed and Reset Demo reproduce the demo state every time
 - [ ] Demo rehearsed 3 times, fallback recording ready
