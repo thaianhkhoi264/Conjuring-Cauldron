@@ -24,7 +24,11 @@ export function useLoginStage() {
 }
 
 const DROPLETS = 30;
-const THROW_MS = 1250;
+const THROW_MS = 900;
+/** How far through the toss the card touches the bottom of the screen (the rest is it sinking in). */
+const TOUCHDOWN = 0.8;
+/** The water starts rising this long before the card lands. */
+const WATER_LEAD_MS = 90;
 
 const wait = (ms: number, wakers: (() => void)[]) =>
   new Promise<void>((resolve) => {
@@ -135,7 +139,11 @@ export function LoginStage({ children }: { children: React.ReactNode }) {
         const sx = matrix.m41;
         const sy = matrix.m42;
         const sr = (Math.atan2(matrix.m12, matrix.m11) * 180) / Math.PI;
-        const fall = window.innerHeight - rect.top + 30;
+        // The card touches down when its bottom edge reaches the bottom of the screen, then sinks in.
+        const landY = window.innerHeight - rect.bottom + 10;
+        const sinkY = landY + rect.height * 0.55;
+        // Land in the middle of the screen, where the cauldron glow is centred.
+        const landX = window.innerWidth / 2 - (rect.left + rect.width / 2);
         const pose = (x: number, y: number, rotate: number, scale: string) =>
           `translate3d(${sx + x}px, ${sy + y}px, 0) rotate(${rotate}deg) scale(${scale})`;
 
@@ -144,17 +152,20 @@ export function LoginStage({ children }: { children: React.ReactNode }) {
           [
             { offset: 0, transform: pose(0, 0, sr, "1"), opacity: 1, easing: "cubic-bezier(0.3, 0, 0.4, 1)" },
             { offset: 0.14, transform: pose(0, 18, sr, "1.03, 0.94"), easing: "cubic-bezier(0.15, 0.7, 0.3, 1)" }, // pressed down
-            { offset: 0.38, transform: pose(14, -90, -4, "0.98, 1.02"), easing: "cubic-bezier(0.55, 0, 0.9, 0.5)" }, // top of the toss
-            { offset: 0.94, transform: pose(70, fall, 16, "0.88"), opacity: 1 }, // falling into the cauldron, shrinking only a little
-            { offset: 1, transform: pose(70, fall, 18, "0.84"), opacity: 0 },
+            { offset: 0.3, transform: pose(landX * 0.25, -90, -4, "0.98, 1.02"), easing: "cubic-bezier(0.5, 0, 0.95, 0.45)" }, // top of the toss, no long hang
+            { offset: TOUCHDOWN, transform: pose(landX, landY, 16, "0.88"), opacity: 1 }, // touches the cauldron, shrinking only a little
+            { offset: 1, transform: pose(landX, sinkY, 18, "0.84"), opacity: 0, easing: "ease-in" },
           ],
           { duration: THROW_MS, fill: "forwards" },
         );
         animations.push(toss);
-        await toss.finished.catch(() => undefined);
+        // The water starts just before the card lands, so it seems to surge up from the impact.
+        await wait(skipped ? 0 : THROW_MS * TOUCHDOWN - WATER_LEAD_MS, wakers);
+        const flooded = floodScreen(skipped);
+        await wait(skipped ? 0 : WATER_LEAD_MS, wakers);
 
         // Impact: splash, ripple, and a flash of the cauldron glow.
-        burst(layer, rect.left + rect.width / 2 + 70, animations);
+        burst(layer, window.innerWidth / 2, animations);
         stage
           .querySelector<HTMLElement>(".cauldron-glow")
           ?.animate(
@@ -162,8 +173,7 @@ export function LoginStage({ children }: { children: React.ReactNode }) {
             { duration: 950, easing: "ease-out" },
           );
 
-        await wait(skipped ? 0 : 460, wakers);
-        await floodScreen(skipped);
+        await flooded;
         go();
       } catch {
         go();
