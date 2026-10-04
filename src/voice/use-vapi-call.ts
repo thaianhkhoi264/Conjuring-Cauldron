@@ -39,7 +39,7 @@ export function useVapiCall() {
     setStatus("ended");
   }, []);
 
-  const start = useCallback(async (employeeId: string, scenarioId: string) => {
+  const start = useCallback(async (scenarioId: string) => {
     setStatus("connecting");
     setError(null);
     setTranscript([]);
@@ -48,7 +48,7 @@ export function useVapiCall() {
       const response = await fetch("/api/voice/session", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ employeeId, scenarioId }),
+        body: JSON.stringify({ scenarioId }),
       });
       const nextSession = (await response.json()) as StartResponse & { error?: string };
       if (!response.ok) throw new Error(nextSession.error ?? "Unable to start the call.");
