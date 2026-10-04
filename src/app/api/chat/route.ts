@@ -56,11 +56,13 @@ export async function POST(request: Request) {
       .map((call) => call.result as { requiresConfirmation?: boolean; assignment?: { assignmentId?: string }; message?: string })
       .find((output) => output?.requiresConfirmation && output.assignment?.assignmentId);
     const created = result.toolCalls.some((call) => (call.result as { created?: boolean })?.created === true);
+    const preferenceSubmitted = result.toolCalls.some((call) => (call.result as { submitted?: boolean })?.submitted === true);
 
     return NextResponse.json({
       text: result.text.trim() || (pending?.message ?? "Done."),
       pendingCalloff: pending ? { assignmentId: pending.assignment!.assignmentId, message: pending.message ?? "" } : null,
       calledOff: created,
+      preferenceSubmitted,
     });
   } catch (error) {
     if (error instanceof LlmUnavailableError) {

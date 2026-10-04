@@ -193,6 +193,22 @@ async function main() {
   assert.equal(result.unfilled.length, 0, "preferences never cost coverage");
   assert.ok(result.stats.preferences!.matched > 0);
 
+  // The chatbot can send a request, only for the signed-in employee, and it still needs approval.
+  const { createEmployeeChatTools, chatContext, employeeChatSystemPrompt } = await import("../src/lib/chatbot");
+  const chatTool = createEmployeeChatTools("wren", false).find((t) => t.declaration.name === "request_shift_preferences")!;
+  assert.ok(chatTool, "the assistant has a preference tool");
+  const bad = (await chatTool.run({ liked: ["close"], avoided: ["close"], days: "any" })) as { error?: string };
+  assert.ok(bad.error, "invalid requests are refused with a reason");
+  const good = (await chatTool.run({ liked: ["close"], avoided: [], days: "weekends", note: "after class" })) as { submitted?: boolean; summary?: string };
+  assert.equal(good.submitted, true);
+  assert.match(good.summary ?? "", /closing/);
+  const wrenState = prefs.getMyPreferenceState("wren");
+  assert.equal(wrenState.pending?.note, "after class");
+  assert.equal(wrenState.active, null, "a chat request is not active until a manager accepts");
+  assert.equal(prefs.listPendingRequests().filter((r) => r.employeeId === "wren").length, 1, "it replaced the seeded pending request");
+  assert.match(employeeChatSystemPrompt("wren"), /request_shift_preferences/);
+  assert.ok(JSON.stringify(chatContext("wren")).includes("waitingForManager"));
+
   // A later approval of "no preference" clears it.
   const clear = prefs.submitPreference("finch", {});
   assert.ok(clear.ok);
