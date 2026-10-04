@@ -102,6 +102,13 @@ export function LoginStage({ children }: { children: React.ReactNode }) {
       }
       playing.current = true;
 
+      // Get the next page ready while the show plays, so the water has less to wait for at the end.
+      router.prefetch(href);
+      if (process.env.NODE_ENV === "development") {
+        // The development server compiles each page the first time it is visited; do that during the toss.
+        void fetch(href).catch(() => undefined);
+      }
+
       const animations: Animation[] = [];
       const wakers: (() => void)[] = [];
       let skipped = false;
@@ -138,8 +145,8 @@ export function LoginStage({ children }: { children: React.ReactNode }) {
             { offset: 0, transform: pose(0, 0, sr, "1"), opacity: 1, easing: "cubic-bezier(0.3, 0, 0.4, 1)" },
             { offset: 0.14, transform: pose(0, 18, sr, "1.03, 0.94"), easing: "cubic-bezier(0.15, 0.7, 0.3, 1)" }, // pressed down
             { offset: 0.38, transform: pose(14, -90, -4, "0.98, 1.02"), easing: "cubic-bezier(0.55, 0, 0.9, 0.5)" }, // top of the toss
-            { offset: 0.94, transform: pose(70, fall, 16, "0.55"), opacity: 1 }, // falling, shrinking into the cauldron
-            { offset: 1, transform: pose(70, fall, 18, "0.5"), opacity: 0 },
+            { offset: 0.94, transform: pose(70, fall, 16, "0.88"), opacity: 1 }, // falling into the cauldron, shrinking only a little
+            { offset: 1, transform: pose(70, fall, 18, "0.84"), opacity: 0 },
           ],
           { duration: THROW_MS, fill: "forwards" },
         );

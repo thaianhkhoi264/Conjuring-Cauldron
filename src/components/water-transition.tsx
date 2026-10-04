@@ -19,7 +19,9 @@ export function floodScreen(quick = false): Promise<void> {
 
 const RISE_MS = 1150;
 const QUICK_RISE_MS = 350;
-const FADE_MS = 900;
+const FADE_MS = 450;
+/** A beat for the new page to paint underneath before the water fades. */
+const REVEAL_DELAY_MS = 60;
 /** If the new page never appears, do not leave the screen covered. */
 const GIVE_UP_MS = 6000;
 
@@ -40,7 +42,7 @@ export function WaterTransition() {
     if (!el || !state) return;
     covered.current = null;
     window.clearTimeout(state.timer);
-    await new Promise((resolve) => window.setTimeout(resolve, 250)); // let the new page paint underneath
+    await new Promise((resolve) => window.setTimeout(resolve, REVEAL_DELAY_MS)); // let the new page paint underneath
     const fade = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, easing: "ease-out", fill: "forwards" });
     await fade.finished.catch(() => undefined);
     el.style.display = "none";

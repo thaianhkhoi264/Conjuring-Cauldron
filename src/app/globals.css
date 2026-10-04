@@ -136,29 +136,15 @@ body {
 }
 
 /* Drifts side to side with a small bob, like it is floating. The size of the movement is a registered
-   property, so it eases between calm, floating and hovered instead of jumping. */
+   property so it eases to a stop (instead of jumping) when someone starts using the form. Hovering changes nothing. */
 .float-card {
   animation: float-sway 7s ease-in-out infinite;
   transition: --sway 0.7s ease, --tilt 0.7s ease, --bob 0.7s ease;
   will-change: transform;
 }
 
-.float-card:hover {
-  --sway: 20px;
-  --tilt: 1.8deg;
-  --bob: 10px;
-}
-
-/* Hovering the button drops back to the gentle float: no extra sway while aiming at it. */
-.float-card:has(button:hover) {
-  --sway: 7px;
-  --tilt: 0.5deg;
-  --bob: 5px;
-}
-
 /* While someone is using the form, hold still so the dropdown and button are easy to hit. */
-.float-card:focus-within,
-.float-card:focus-within:has(button:hover) {
+.float-card:focus-within {
   --sway: 0px;
   --tilt: 0deg;
   --bob: 0px;
