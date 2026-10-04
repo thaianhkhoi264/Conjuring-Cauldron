@@ -45,6 +45,26 @@ export function extractTranscript(payload: unknown): TranscriptTurn[] {
   });
 }
 
+const trimEnd = (text: string) => text.trim().replace(/[.!?,\s]+$/, "");
+
+/**
+ * Speech arrives as a sentence that grows ("I'm sorry." then "I'm sorry. We can remake it."). If the next turn from
+ * the same speaker is just a longer version of the previous one, keep only the longer, finished version.
+ */
+export function collapseGrowingTurns(turns: TranscriptTurn[]): TranscriptTurn[] {
+  const result: TranscriptTurn[] = [];
+  for (const turn of turns) {
+    const previous = result[result.length - 1];
+    const prefix = previous ? trimEnd(previous.text) : "";
+    if (previous && previous.speaker === turn.speaker && prefix && turn.text.trim().startsWith(prefix)) {
+      result[result.length - 1] = turn;
+    } else {
+      result.push(turn);
+    }
+  }
+  return result;
+}
+
 export function mergeTranscript(existing: TranscriptTurn[], incoming: TranscriptTurn[]) {
   const merged = [...existing];
   for (const turn of incoming) {

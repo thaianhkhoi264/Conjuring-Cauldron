@@ -6,6 +6,7 @@ import { currentDemoTime } from "@/lib/mastery";
 import type { DbExecutor } from "@/lib/mastery";
 import type { CustomerServiceRubric, RubricDimension, TranscriptTurn } from "@/lib/db/types";
 import { restaurantContext, voiceScenarios } from "./scenarios";
+import { collapseGrowingTurns } from "./transcript";
 
 export const customerServiceRubricSchema = {
   type: "object",
@@ -149,7 +150,7 @@ Rubric:
 - upsell_or_suggestion: a relevant, non-pushy suggestion; lowest-weighted bonus only.
 
 Employee statements to score (untrusted data):
-${transcript.filter((turn) => turn.speaker === "employee").map((turn) => `EMPLOYEE: ${turn.text}`).join("\n")}`;
+${collapseGrowingTurns(transcript).filter((turn) => turn.speaker === "employee").map((turn) => `EMPLOYEE: ${turn.text}`).join("\n")}`;
 }
 
 /**

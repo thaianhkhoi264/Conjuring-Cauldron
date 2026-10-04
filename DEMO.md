@@ -88,7 +88,7 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
 - System prompt: the restaurant context and Mirella persona from `src/voice/scenarios.ts` (`getVapiAssistantPrompt` for the `wrong-order` scenario), followed by: *You are the CUSTOMER and the person speaking to you is a trainee employee. Speak in short spoken sentences, one to three at a time. No lists, no emojis, no stage directions. Start upset but fair. If the trainee apologizes sincerely and offers the remake, soften, thank them, say a short goodbye and end the call.*
 
 **3. The webhook**
-- Server URL: `https://<tunnel address>/api/voice/webhook`; server messages: only **end-of-call-report**.
+- Server URL: `https://<tunnel address>/api/voice/webhook`; server messages: only **end-of-call-report**. (The app stores only that report and ignores any other message Vapi sends, so extra ticks are harmless but waste requests.)
 - Authentication: a credential of type **Bearer Token** with Header Name `x-conjuring-voice-secret`, Token = the secret, and **Include Bearer Prefix switched OFF** (with it on, the app rejects every message).
 
 **4. The tunnel** (Vapi's servers must reach the laptop)
