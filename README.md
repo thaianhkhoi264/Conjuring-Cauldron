@@ -30,6 +30,8 @@ Open `/login` and pick a demo account:
 
 ### Environment (`.env.local`)
 
+Getting a Gemini key that works: create the key in a Google Cloud project, **enable the Generative Language API** on that project, and if you restrict the key, include that API in its **API restrictions**. The free tier is very limited (it blocks Pro models and returns 429 quickly); linking the project to a billing account moves it to a paid plan.
+
 Never commit this file or paste keys into chat, issues or PRs.
 
 | Variable | Needed for |
@@ -51,6 +53,8 @@ Never commit this file or paste keys into chat, issues or PRs.
 | `npm run db:push` | apply schema changes to the local database |
 | `npm run db:generate` | generate a migration after editing `src/lib/db/schema.ts` |
 | `npm run verify:training`, `verify:scheduler`, `verify:calloffs`, `verify:clock` | feature checks on pure logic or a throwaway database; safe to run any time |
+| `npm run verify:agent-tools` | checks the schedule assistant's tools and the Apply step without calling Gemini |
+| `npm run verify:agent-live` | runs the schedule assistant against real Gemini on a throwaway database (needs a working key) |
 | `npm run verify:llm` | checks your Gemini setup end to end (lists available models if the model ids are not set yet) |
 | `npm run verify:voice`, `verify:chatbot` | Agent A's feature checks |
 

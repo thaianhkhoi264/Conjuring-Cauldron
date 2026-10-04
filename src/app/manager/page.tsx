@@ -2,6 +2,7 @@ import { CalloffInbox } from "@/components/calloff-inbox";
 import { DemoControls } from "@/components/demo-controls";
 import { GenerateScheduleButton } from "@/components/generate-schedule-button";
 import { ScheduleGrid } from "@/components/schedule-grid";
+import { ScheduleAssistant } from "@/components/schedule-assistant";
 import { ScheduleHealthBanner } from "@/components/schedule-health-banner";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SkillMatrix } from "@/components/skill-matrix";
@@ -51,6 +52,8 @@ export default async function ManagerHome() {
         <ScheduleHealthBanner health={health} />
         <ScheduleGrid shifts={shifts} />
       </section>
+
+      <ScheduleAssistant />
 
       <section className="flex flex-col gap-3" aria-labelledby="skills-heading">
         <h2 id="skills-heading" className="text-xl font-semibold">
