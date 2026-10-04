@@ -83,6 +83,37 @@ async function main() {
   assert.ok(judgedWrong.mistakes.some((m) => m.startsWith("Forgot:")));
   assert.ok(judgedWrong.score < 0.3);
 
+  // The judge never makes a trainee wait past its deadline, and recovers from a quick network blip.
+  const input = { recipeName: "Cauldron Burger", station: "food" as const, facts: perfect, events: adds(burger) };
+  const good = { accuracy: 1, speed: 1, mistakes: [], coaching: "Great work, keep it up." };
+
+  let started = Date.now();
+  const hung = await judgeAttempt(input, () => new Promise(() => {}), 400);
+  assert.equal(hung.source, "fallback", "a hanging model falls back");
+  assert.ok(Date.now() - started < 1500, "and does so at the deadline, not later");
+
+  let calls = 0;
+  const blip = await judgeAttempt(input, (async () => {
+    calls++;
+    if (calls === 1) throw new Error("fetch failed");
+    return good;
+  }) as never, 5000);
+  assert.equal(calls, 2, "a fast failure is retried once");
+  assert.equal(blip.source, "gemini");
+  assert.equal(blip.coaching, "Great work, keep it up.");
+
+  calls = 0;
+  started = Date.now();
+  const down = await judgeAttempt(input, (async () => {
+    calls++;
+    throw new Error("503 high demand");
+  }) as never, 5000);
+  assert.equal(down.source, "fallback");
+  assert.ok(Date.now() - started < 1500, "a quick failure does not wait out the deadline");
+
+  const wild = await judgeAttempt(input, (async () => ({ accuracy: 0, speed: 0, mistakes: [], coaching: "x" })) as never, 5000);
+  assert.equal(wild.accuracy, 0.85, "the model can only move accuracy 0.15 from the computed value");
+
   console.info("Training scoring checks passed.");
 }
 

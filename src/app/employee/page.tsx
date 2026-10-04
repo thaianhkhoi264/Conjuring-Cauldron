@@ -29,6 +29,20 @@ export default async function EmployeeHome() {
         <SignOutButton />
       </header>
 
+      {certified.length === 0 && (
+        <section className="rounded-lg border border-emerald-400/60 bg-emerald-950/30 p-5" aria-labelledby="start-heading">
+          <h2 id="start-heading" className="text-lg font-semibold">
+            {stations.some((s) => s.score !== null) ? "Keep training to join the schedule" : "Start your training"}
+          </h2>
+          <p className="mt-1 text-sm text-emerald-100">
+            Reach 80% in any one chapter (Food, Drinks or Customer Service) and you will be added to the schedule. About 5 minutes each.
+          </p>
+          <Link href="/employee/training" className="mt-3 inline-block rounded bg-emerald-500 px-4 py-2 font-semibold text-black">
+            Go to training
+          </Link>
+        </section>
+      )}
+
       <ShiftOffers offers={offers} />
 
       <RetestsDue items={retests} />

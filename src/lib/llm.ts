@@ -70,7 +70,11 @@ export async function generateJson<T>({
  * Adapter matching Agent A's `JsonGenerator` signature (plain JSON Schema + prompt).
  * Uses `responseJsonSchema`, which accepts standard JSON Schema such as `additionalProperties`.
  */
-export async function generateJsonFromSchema<T>(schema: object, prompt: string): Promise<T> {
+export async function generateJsonFromSchema<T>(
+  schema: object,
+  prompt: string,
+  options: { timeoutMs?: number; thinking?: Thinking } = {},
+): Promise<T> {
   const response = await getClient().models.generateContent({
     model: modelFor("fast"),
     contents: prompt,
@@ -78,6 +82,9 @@ export async function generateJsonFromSchema<T>(schema: object, prompt: string):
       temperature: 0,
       responseMimeType: "application/json",
       responseJsonSchema: schema,
+      // A hung connection otherwise sits for ~10 s before failing; callers that must stay snappy pass a limit.
+      ...(options.timeoutMs ? { abortSignal: AbortSignal.timeout(options.timeoutMs) } : {}),
+      ...(options.thinking ? { thinkingConfig: thinkingConfig(options.thinking) } : {}),
     },
   });
   const text = response.text;

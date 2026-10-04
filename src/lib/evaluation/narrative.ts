@@ -75,9 +75,9 @@ ${JSON.stringify(facts)}`;
 
   try {
     // One quick retry: a brief network blip should not cost the employee their summary.
-    const raw = await generateJsonFromSchema<{ summary?: unknown; tips?: unknown }>(schema, prompt).catch(async () => {
+    const raw = await generateJsonFromSchema<{ summary?: unknown; tips?: unknown }>(schema, prompt, { thinking: "low", timeoutMs: 15_000 }).catch(async () => {
       await new Promise((resolve) => setTimeout(resolve, 800));
-      return generateJsonFromSchema<{ summary?: unknown; tips?: unknown }>(schema, prompt);
+      return generateJsonFromSchema<{ summary?: unknown; tips?: unknown }>(schema, prompt, { thinking: "low", timeoutMs: 15_000 });
     });
     const summary = clean(raw.summary, 500);
     const tips = Array.isArray(raw.tips) ? raw.tips.map((t) => clean(t, 160)).filter(Boolean).slice(0, 3) : [];
