@@ -8,8 +8,8 @@ import { getMastery, STATION_LABELS } from "@/lib/training/data";
 export const dynamic = "force-dynamic";
 
 const chapters = [
-  { station: "food" as const, blurb: "Build every dish from the Conjuring Cauldron recipe book." },
-  { station: "drink" as const, blurb: "Brew potions, lattes and ciders in the right order." },
+  { station: "food" as const, icon: "🍔", blurb: "Build every dish from the Conjuring Cauldron recipe book." },
+  { station: "drink" as const, icon: "🧪", blurb: "Brew potions, lattes and ciders in the right order." },
 ];
 
 export default async function TrainingHub() {
@@ -32,13 +32,16 @@ export default async function TrainingHub() {
       </header>
 
       <div className="grid gap-4">
-        {chapters.map(({ station, blurb }) => (
+        {chapters.map(({ station, icon, blurb }) => (
           <Link
             key={station}
             href={`/employee/training/${station}`}
-            className="rounded-lg border border-violet-400/40 bg-violet-950/40 p-5 hover:bg-violet-900/40"
+            className="lift-card rounded-xl border border-violet-400/40 bg-violet-950/40 p-5 hover:bg-violet-900/40"
           >
             <h2 className="text-lg font-semibold">
+              <span aria-hidden="true" className="mr-2 text-2xl">
+                {icon}
+              </span>
               {STATION_LABELS[station]}
               {retestStations.has(station) && (
                 <span className="ml-2 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-black">Retest due</span>
@@ -51,9 +54,12 @@ export default async function TrainingHub() {
 
         <Link
           href="/employee/training/customer-service"
-          className="rounded-lg border border-violet-400/40 bg-violet-950/40 p-5 hover:bg-violet-900/40"
+          className="lift-card rounded-xl border border-violet-400/40 bg-violet-950/40 p-5 hover:bg-violet-900/40"
         >
           <h2 className="text-lg font-semibold">
+            <span aria-hidden="true" className="mr-2 text-2xl">
+              📞
+            </span>
             {STATION_LABELS.cs}
             {retestStations.has("cs") && (
               <span className="ml-2 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-black">Retest due</span>
