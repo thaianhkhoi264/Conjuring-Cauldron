@@ -33,6 +33,14 @@ export function vapiMessageToTurn(message: BrowserMessage): TranscriptTurn | und
   return speaker && text ? { speaker, text } : undefined;
 }
 
+/** The sentence being spoken right now (a partial transcript), for the live view. Never graded. */
+export function vapiMessageToPartial(message: BrowserMessage): TranscriptTurn | undefined {
+  if (message.type !== "transcript" || message.transcriptType !== "partial") return undefined;
+  const speaker = toSpeaker(message.role);
+  const text = message.transcript?.trim();
+  return speaker && text ? { speaker, text } : undefined;
+}
+
 /** Accepts both conversation-update and final call-artifact message shapes. */
 export function extractTranscript(payload: unknown): TranscriptTurn[] {
   const record = payload as { message?: { messages?: VapiMessage[]; artifact?: { messages?: VapiMessage[] } } };

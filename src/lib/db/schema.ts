@@ -78,6 +78,8 @@ export const callSessions = sqliteTable("call_sessions", {
   scenarioId: text("scenario_id").notNull(),
   transcriptJson: text("transcript_json"),
   rubricJson: text("rubric_json"),
+  /** Transcript lines the trainee reported as misheard, and whether each correction was accepted. */
+  correctionsJson: text("corrections_json"),
   score: real("score"),
   startedAt: text("started_at").notNull(),
   endedAt: text("ended_at"),

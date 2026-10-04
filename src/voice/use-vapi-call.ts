@@ -4,7 +4,7 @@ import Vapi from "@vapi-ai/web";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { TranscriptTurn } from "@/lib/db/types";
-import { mergeTranscript, vapiMessageToTurn } from "./transcript";
+import { mergeTranscript, vapiMessageToPartial, vapiMessageToTurn } from "./transcript";
 import { describeVapiError } from "./vapi-errors";
 import type { VapiSessionConfig } from "./vapi";
 
@@ -22,11 +22,14 @@ export function useVapiCall() {
   const [status, setStatus] = useState<CallStatus>("idle");
   const [session, setSession] = useState<StartResponse | null>(null);
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
+  /** The sentence being spoken right now, for the live view only. */
+  const [partial, setPartial] = useState<TranscriptTurn | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const stop = useCallback(async () => {
     await client.current?.stop();
     client.current = null;
+    setPartial(null);
     setStatus("ended");
   }, []);
 
@@ -34,6 +37,7 @@ export function useVapiCall() {
     setStatus("connecting");
     setError(null);
     setTranscript([]);
+    setPartial(null);
 
     try {
       const response = await fetch("/api/voice/session", {
@@ -55,11 +59,18 @@ export function useVapiCall() {
       voiceClient.on("call-start", () => setStatus("live"));
       voiceClient.on("call-end", () => {
         client.current = null;
+        setPartial(null);
         setStatus("ended");
       });
       voiceClient.on("message", (message) => {
         const turn = vapiMessageToTurn(message);
-        if (turn) setTranscript((current) => mergeTranscript(current, [turn]));
+        if (turn) {
+          setTranscript((current) => mergeTranscript(current, [turn]));
+          setPartial(null);
+          return;
+        }
+        const speaking = vapiMessageToPartial(message);
+        if (speaking) setPartial(speaking);
       });
       voiceClient.on("error", (nextError) => {
         console.error("Vapi call error:", nextError);
@@ -77,5 +88,5 @@ export function useVapiCall() {
 
   useEffect(() => () => { void client.current?.stop(); }, []);
 
-  return { status, session, transcript, error, start, stop };
+  return { status, session, transcript, partial, error, start, stop };
 }

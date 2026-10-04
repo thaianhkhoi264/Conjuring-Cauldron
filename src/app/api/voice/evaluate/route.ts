@@ -24,11 +24,11 @@ export async function POST(request: Request) {
   if (!user) return unauthorized();
   if (user.role !== "employee") return forbidden();
 
-  const body = (await request.json().catch(() => ({}))) as { sessionId?: string };
+  const body = (await request.json().catch(() => ({}))) as { sessionId?: string; corrections?: unknown };
   if (!body.sessionId) return NextResponse.json({ error: "A call session is required." }, { status: 400 });
 
   try {
-    const result = await evaluateCustomerServiceSession(body.sessionId, user.id, generateRubric, scoreApplier);
+    const result = await evaluateCustomerServiceSession(body.sessionId, user.id, generateRubric, scoreApplier, body.corrections);
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to evaluate the call.";

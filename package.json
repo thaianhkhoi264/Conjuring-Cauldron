@@ -13,6 +13,7 @@
     "db:setup": "drizzle-kit push && tsx scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "verify:voice": "tsx scripts/verify-voice.ts",
+    "verify:voice-corrections": "tsx scripts/verify-voice-corrections.ts",
     "verify:voice-mapping": "tsx scripts/verify-voice-mapping.ts",
     "verify:chatbot": "tsx scripts/verify-chatbot.ts",
     "verify:training": "tsx scripts/verify-training.ts",
