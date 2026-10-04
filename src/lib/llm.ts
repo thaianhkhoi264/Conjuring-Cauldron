@@ -1,5 +1,6 @@
 import {
   GoogleGenAI,
+  ThinkingLevel,
   type Content,
   type FunctionDeclaration,
   type Schema,
@@ -89,6 +90,14 @@ export type AgentTool = {
   run: (args: Record<string, unknown>) => Promise<unknown> | unknown;
 };
 
+/** How much the model "thinks" before answering. Lower is much faster; chat and tool loops use "minimal". */
+export type Thinking = "minimal" | "low";
+
+function thinkingConfig(thinking: Thinking | undefined) {
+  if (!thinking) return undefined;
+  return { thinkingLevel: thinking === "minimal" ? ThinkingLevel.MINIMAL : ThinkingLevel.LOW };
+}
+
 export type RunAgentOptions = {
   prompt: string;
   tools: AgentTool[];
@@ -96,6 +105,7 @@ export type RunAgentOptions = {
   history?: Content[];
   tier?: "fast" | "pro";
   maxSteps?: number;
+  thinking?: Thinking;
 };
 
 export type AgentResult = {
@@ -112,6 +122,7 @@ export async function runAgent({
   history = [],
   tier = "fast",
   maxSteps = 8,
+  thinking,
 }: RunAgentOptions): Promise<AgentResult> {
   const byName = new Map(tools.map((tool) => [tool.declaration.name, tool]));
   const contents: Content[] = [...history, { role: "user", parts: [{ text: prompt }] }];
@@ -124,6 +135,7 @@ export async function runAgent({
       config: {
         systemInstruction: system,
         tools: [{ functionDeclarations: tools.map((tool) => tool.declaration) }],
+        thinkingConfig: thinkingConfig(thinking),
       },
     });
 
