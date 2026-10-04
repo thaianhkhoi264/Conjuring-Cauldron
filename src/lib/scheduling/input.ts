@@ -1,4 +1,5 @@
 import type { availability, employees, mastery, shifts } from "@/lib/db/schema";
+import type { EnginePreference } from "./preference";
 import type { StationRequirements } from "@/lib/db/types";
 import type { EngineEmployee, EngineShift, ScheduleInput } from "./types";
 
@@ -12,6 +13,8 @@ export type ScheduleRows = {
   mastery: Pick<MasteryRow, "employeeId" | "station" | "score">[];
   availability: Pick<AvailabilityRow, "employeeId" | "dayOfWeek" | "startTime" | "endTime">[];
   shifts: Pick<ShiftRow, "id" | "date" | "slot" | "requiredJson">[];
+  /** Accepted preferences by employee id. */
+  preferences?: Map<string, EnginePreference>;
 };
 
 /** Pure mapping from table rows to the engine input (staff only, no managers). */
@@ -30,6 +33,7 @@ export function buildScheduleInput(rows: ScheduleRows): ScheduleInput {
         availability: rows.availability
           .filter((a) => a.employeeId === e.id)
           .map((a) => ({ day: a.dayOfWeek, start: a.startTime, end: a.endTime })),
+        ...(rows.preferences?.has(e.id) ? { preference: rows.preferences.get(e.id) } : {}),
       };
     });
 

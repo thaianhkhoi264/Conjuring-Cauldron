@@ -71,13 +71,28 @@ async function main() {
   assert.equal(db.select().from(demoClock).get()!.now, "2026-10-06T09:00:00.000Z");
   assert.equal(clock.getDemoDate(), "2026-10-06");
 
-  // Skills slipped, never rose, never went below the floor, and the report matches the database.
+  // Skills slipped, only practised skills ever rose, nothing went below the floor, and the report matches the database.
   const scoreAfter = db.select().from(mastery).all();
   assert.ok(summary.decayed.length > 0, "something decayed");
+  const practisedKeys = new Set(summary.practised.map((p) => `${p.employeeId}|${p.station}`));
   for (const row of scoreAfter) {
-    assert.ok(row.score <= scoreBefore.get(row.id)! + 1e-9, "scores never go up from decay");
+    const wasPractised = practisedKeys.has(`${row.employeeId}|${row.station}`);
+    assert.ok(wasPractised || row.score <= scoreBefore.get(row.id)! + 1e-9, "only worked stations can go up");
     assert.ok(row.score >= DECAY_FLOOR - 1e-9 || scoreBefore.get(row.id)! < DECAY_FLOOR);
   }
+
+  // Working shifts counted as practice: the schedule had shifts on 10-04 and 10-05, so people gained experience there.
+  assert.ok(summary.shiftsWorked > 0, "shifts were worked while the clock moved");
+  assert.ok(summary.practised.length > 0);
+  for (const p of summary.practised) {
+    const row = db.select().from(mastery).where(eq(mastery.employeeId, p.employeeId)).all().find((m) => m.station === p.station)!;
+    assert.ok(row.experience > 0, "worked stations have experience");
+    assert.ok(row.lastWorkedAt, "and a last worked date");
+    assert.ok(row.score <= 0.9 + 1e-9 || p.before > 0.9, "practice never pushes a skill past its ceiling");
+  }
+  // A station nobody worked has no experience gained from the skip.
+  const idle = db.select().from(mastery).all().filter((m) => !practisedKeys.has(`${m.employeeId}|${m.station}`));
+  assert.ok(idle.every((m) => m.lastWorkedAt === null), "idle stations were not credited");
   for (const change of summary.decayed) {
     assert.ok(change.after < change.before);
     assert.equal(change.lostCertification, change.before >= 0.8 && change.after < 0.8);
@@ -121,11 +136,14 @@ async function main() {
   assert.ok(!clock.getRetestsDue("odette").some((r) => r.station === "drink"));
   assert.equal(db.select().from(mastery).where(eq(mastery.id, "mastery-odette-drink")).get()!.lastTrainedAt, "2026-10-06T09:00:00.000Z");
 
-  // A second skip only decays the days that have not already been decayed.
-  const before2 = db.select().from(mastery).where(eq(mastery.id, "mastery-rook-food")).get()!;
-  clock.skipAhead(3);
-  const after2 = db.select().from(mastery).where(eq(mastery.id, "mastery-rook-food")).get()!;
-  assert.ok(after2.score < before2.score);
+  // A second skip keeps decaying stations that were not worked, and the report matches the database.
+  const second2 = clock.skipAhead(3);
+  assert.ok(second2.decayed.length > 0, "stale stations keep slipping");
+  for (const change of second2.decayed) {
+    const row = db.select().from(mastery).where(eq(mastery.employeeId, change.employeeId)).all().find((m) => m.station === change.station)!;
+    assert.equal(row.score, change.after);
+    assert.ok(change.after < change.before);
+  }
 
   // Reset puts everything back.
   clock.resetDemo();

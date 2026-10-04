@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Spinner } from "@/components/ui";
 
 type Summary = {
-  stats: { anchorsRequired: number; anchorsFilled: number; shadows: number };
+  stats: { anchorsRequired: number; anchorsFilled: number; shadows: number; preferences?: { matched: number; against: number } };
   unfilled: { shiftId: string; station: string }[];
   warnings: string[];
 };
@@ -55,6 +55,12 @@ export function GenerateScheduleButton({ hasSchedule }: { hasSchedule: boolean }
             Filled {summary.stats.anchorsFilled} of {summary.stats.anchorsRequired} required slots
             {summary.stats.shadows ? `, with ${summary.stats.shadows} trainee shadow slot(s)` : ""}.
           </p>
+          {summary.stats.preferences && summary.stats.preferences.matched + summary.stats.preferences.against > 0 && (
+            <p>
+              {summary.stats.preferences.matched} shift(s) match what people asked for
+              {summary.stats.preferences.against > 0 ? `; ${summary.stats.preferences.against} go against a preference because coverage needed them` : ""}.
+            </p>
+          )}
           {summary.unfilled.length > 0 && (
             <p className="text-red-300">{summary.unfilled.length} slot(s) could not be covered by certified staff.</p>
           )}

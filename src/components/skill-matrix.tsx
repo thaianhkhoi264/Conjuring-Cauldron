@@ -19,7 +19,7 @@ function skillClass(score: number | null) {
 export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
   return (
     <div className="table-wrap overflow-x-auto">
-      <table className="data-table w-full min-w-[32rem] text-left text-sm">
+      <table className="data-table w-full min-w-[40rem] text-left text-sm">
         <caption className="sr-only">Team skills by station</caption>
         <thead>
           <tr>
@@ -33,6 +33,9 @@ export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
             ))}
             <th scope="col" className="border border-violet-900 p-2">
               Hours
+            </th>
+            <th scope="col" className="border border-violet-900 p-2">
+              Preferences
             </th>
           </tr>
         </thead>
@@ -50,12 +53,14 @@ export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
                 return (
                   <td key={s.key} className={`border border-violet-900 p-2 ${skillClass(score)}`}>
                     {score === null ? "Not started" : `${Math.round(score * 100)}%${score >= 0.8 ? " certified" : ""}`}
+                    {row.experience[s.key] > 0 && <span className="block text-xs opacity-80">{Math.round(row.experience[s.key])} shifts</span>}
                   </td>
                 );
               })}
               <td className="border border-violet-900 p-2">
                 {row.hoursScheduled}/{row.hoursCap}h
               </td>
+              <td className="border border-violet-900 p-2 text-xs text-violet-200">{row.preference}</td>
             </tr>
           ))}
         </tbody>

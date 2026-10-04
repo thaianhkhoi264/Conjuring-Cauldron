@@ -11,6 +11,7 @@ import {
   employees,
   mastery,
   messages,
+  preferenceRequests,
   recipes,
   shifts,
 } from "./schema";
@@ -27,6 +28,7 @@ export type DemoSeed = {
   calloffs: InferInsertModel<typeof calloffs>[];
   calloffCandidates: InferInsertModel<typeof calloffCandidates>[];
   messages: InferInsertModel<typeof messages>[];
+  preferenceRequests: InferInsertModel<typeof preferenceRequests>[];
   demoClock: InferInsertModel<typeof demoClock>;
 };
 
@@ -44,6 +46,7 @@ export function loadDemoSeed(database: typeof import("./index").db, seed: DemoSe
     tx.delete(mastery).run();
     tx.delete(availability).run();
     tx.delete(messages).run();
+    tx.delete(preferenceRequests).run();
     tx.delete(shifts).run();
     tx.delete(recipes).run();
     tx.delete(employees).run();
@@ -60,6 +63,7 @@ export function loadDemoSeed(database: typeof import("./index").db, seed: DemoSe
     if (seed.calloffs.length) tx.insert(calloffs).values(seed.calloffs).run();
     if (seed.calloffCandidates.length) tx.insert(calloffCandidates).values(seed.calloffCandidates).run();
     if (seed.messages.length) tx.insert(messages).values(seed.messages).run();
+    if (seed.preferenceRequests.length) tx.insert(preferenceRequests).values(seed.preferenceRequests).run();
     tx.insert(demoClock).values(seed.demoClock).run();
   });
 }

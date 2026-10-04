@@ -11,6 +11,8 @@ type Summary = {
   decayed: unknown[];
   lostCertifications: { name: string; station: string; before: number; after: number }[];
   retestNotices: number;
+  shiftsWorked?: number;
+  practised?: { name: string; station: string; before: number; after: number }[];
 };
 
 const STATION_LABEL: Record<string, string> = { food: "Food", drink: "Drinks", cs: "Customer Service" };
@@ -100,6 +102,12 @@ export function DemoControls({ demoDate }: { demoDate: string }) {
             Moved from {summary.from} to {summary.to}. {summary.decayed.length} skills slipped a little;{" "}
             {summary.retestNotices} employees were asked to retest.
           </p>
+          {(summary.shiftsWorked ?? 0) > 0 && (
+            <p className="mt-1 text-emerald-200">
+              {summary.shiftsWorked} shifts were worked in that time, which counted as practice: skills stayed fresher and experience grew
+              {(summary.practised ?? []).some((p) => p.after > p.before + 1e-9) ? ", and some skills even improved" : ""}.
+            </p>
+          )}
           {summary.lostCertifications.length > 0 ? (
             <p className="mt-1 text-amber-300">
               Lost certification:{" "}

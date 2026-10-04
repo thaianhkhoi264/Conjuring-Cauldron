@@ -139,6 +139,31 @@ const staff: StaffDef[] = [
 
 const STATIONS: Station[] = ["food", "drink", "cs"];
 
+/** Shifts each person has worked before the demo starts. A station's experience is this times their skill there. */
+const TENURE: Record<string, number> = {
+  elowen: 24, rook: 14, odette: 18, hazel: 12, isolde: 8, corvin: 6, sorrel: 5, tamsin: 5,
+  briar: 4, quill: 4, juniper: 3, bram: 3, selene: 2, wren: 0, finch: 0, morgana: 0,
+};
+
+type PreferenceDef = { liked: ("open" | "mid" | "close")[]; avoided: ("open" | "mid" | "close")[]; days: "any" | "weekends" | "weekdays"; note: string };
+
+/** Already approved by the manager. */
+const APPROVED_PREFERENCES: Record<string, PreferenceDef> = {
+  selene: { liked: ["close"], avoided: [], days: "weekends", note: "Weekend closes suit my other job." },
+  bram: { liked: ["close"], avoided: [], days: "any", note: "I do better in the evenings." },
+  tamsin: { liked: ["open"], avoided: [], days: "any", note: "" },
+  rook: { liked: ["open"], avoided: [], days: "weekdays", note: "" },
+  elowen: { liked: [], avoided: ["open"], days: "any", note: "Not a morning person." },
+  corvin: { liked: [], avoided: [], days: "weekends", note: "" },
+  hazel: { liked: ["close"], avoided: [], days: "any", note: "" },
+};
+
+/** Waiting for the manager, so the demo can show approving a request. */
+const PENDING_PREFERENCES: Record<string, PreferenceDef> = {
+  juniper: { liked: ["close"], avoided: ["open"], days: "any", note: "I have classes in the morning this term." },
+  wren: { liked: ["open"], avoided: [], days: "weekends", note: "Weekend mornings work best for me." },
+};
+
 function isoDaysAgo(days: number) {
   return new Date(Date.parse(DEMO_NOW) - days * 86_400_000).toISOString();
 }
@@ -199,6 +224,7 @@ export function buildDemoSeed(): DemoSeed {
         station,
         score,
         attempts: attemptCount,
+        experience: Math.round((TENURE[s.id] ?? 0) * score),
         lastTrainedAt: isoDaysAgo(1 + (index % 2)), // 1 to 2 days: nobody is due a retest until Skip Ahead
       });
       const pool = recipes.filter((r) => r.station === station);
@@ -229,6 +255,33 @@ export function buildDemoSeed(): DemoSeed {
     },
   ];
 
+  const preferenceRequests: DemoSeed["preferenceRequests"] = [
+    ...Object.entries(APPROVED_PREFERENCES).map(([employeeId, p]) => ({
+      id: `pref-${employeeId}`,
+      employeeId,
+      likedSlotsJson: JSON.stringify(p.liked),
+      avoidedSlotsJson: JSON.stringify(p.avoided),
+      dayPref: p.days,
+      note: p.note,
+      status: "accepted" as const,
+      managerNote: null,
+      createdAt: isoDaysAgo(25),
+      decidedAt: isoDaysAgo(20),
+    })),
+    ...Object.entries(PENDING_PREFERENCES).map(([employeeId, p]) => ({
+      id: `pref-${employeeId}-pending`,
+      employeeId,
+      likedSlotsJson: JSON.stringify(p.liked),
+      avoidedSlotsJson: JSON.stringify(p.avoided),
+      dayPref: p.days,
+      note: p.note,
+      status: "pending" as const,
+      managerNote: null,
+      createdAt: DEMO_NOW,
+      decidedAt: null,
+    })),
+  ];
+
   return {
     employees: employeeRows,
     availability,
@@ -241,6 +294,7 @@ export function buildDemoSeed(): DemoSeed {
     calloffs: [],
     calloffCandidates: [],
     messages,
+    preferenceRequests,
     demoClock: { id: 1, now: DEMO_NOW },
   };
 }

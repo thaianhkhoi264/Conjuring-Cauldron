@@ -80,10 +80,10 @@ export function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
-export function getMastery(employeeId: string): Record<Station, { score: number; attempts: number } | null> {
+export function getMastery(employeeId: string): Record<Station, { score: number; attempts: number; experience: number } | null> {
   const rows = db.select().from(mastery).where(eq(mastery.employeeId, employeeId)).all();
-  const result: Record<Station, { score: number; attempts: number } | null> = { food: null, drink: null, cs: null };
-  for (const row of rows) result[row.station] = { score: row.score, attempts: row.attempts };
+  const result: Record<Station, { score: number; attempts: number; experience: number } | null> = { food: null, drink: null, cs: null };
+  for (const row of rows) result[row.station] = { score: row.score, attempts: row.attempts, experience: row.experience };
   return result;
 }
 

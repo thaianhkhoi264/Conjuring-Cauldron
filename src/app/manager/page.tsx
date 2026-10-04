@@ -1,6 +1,7 @@
 import { CalloffInbox } from "@/components/calloff-inbox";
 import { DemoControls } from "@/components/demo-controls";
 import { GenerateScheduleButton } from "@/components/generate-schedule-button";
+import { PreferenceInbox } from "@/components/preference-inbox";
 import { ScheduleGrid } from "@/components/schedule-grid";
 import { ScheduleAssistant } from "@/components/schedule-assistant";
 import { ScheduleHealthBanner } from "@/components/schedule-health-banner";
@@ -8,6 +9,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { SkillMatrix } from "@/components/skill-matrix";
 import { listOpenCalloffs } from "@/lib/calloffs";
 import { getDemoDate } from "@/lib/demo-clock";
+import { listPendingRequests } from "@/lib/preferences";
 import { requireManager } from "@/lib/require-user";
 import { getScheduleHealth, getScheduleView, getSkillMatrix } from "@/lib/scheduling/store";
 
@@ -18,6 +20,7 @@ export default async function ManagerHome() {
   const shifts = getScheduleView();
   const matrix = getSkillMatrix();
   const calloffs = listOpenCalloffs();
+  const preferenceRequests = listPendingRequests();
   const health = getScheduleHealth();
   const hasSchedule = shifts.some((s) => s.assignments.length > 0);
 
@@ -35,6 +38,21 @@ export default async function ManagerHome() {
           Call-off inbox
         </h2>
         <CalloffInbox items={calloffs} />
+      </section>
+
+      <section className="flex flex-col gap-3" aria-labelledby="prefs-heading">
+        <h2 id="prefs-heading" className="text-xl font-semibold">
+          Shift preference requests
+        </h2>
+        <PreferenceInbox
+          items={preferenceRequests.map((r) => ({
+            id: r.id,
+            employeeName: r.employeeName,
+            description: r.description,
+            current: r.current,
+            note: r.note,
+          }))}
+        />
       </section>
 
       <section className="flex flex-col gap-4" aria-labelledby="schedule-heading">
