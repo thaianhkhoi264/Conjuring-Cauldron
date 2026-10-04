@@ -82,7 +82,7 @@ export function EvaluationView({ evaluation, employeeId }: { evaluation: Evaluat
 
       {!employeeId && (
         <p>
-          <Link href="/employee/training" className="inline-block rounded bg-violet-500 px-4 py-2 font-semibold text-white">
+          <Link href="/employee/training" className="inline-block rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110">
             Go to training
           </Link>
         </p>

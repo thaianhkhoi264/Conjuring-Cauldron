@@ -9,18 +9,21 @@ export function MasteryBar({ score, label }: { score: number | null; label?: str
       {label && (
         <div className="mb-1 flex justify-between text-xs">
           <span>{label}</span>
-          <span>{score === null ? "Not started" : certified ? `${percent}% certified` : `${percent}%`}</span>
+          <span>{score === null ? "Not started" : certified ? <span className="text-amber-200">{percent}% certified</span> : `${percent}%`}</span>
         </div>
       )}
       <div
-        className="relative h-3 overflow-hidden rounded bg-violet-950"
+        className="relative h-3 overflow-hidden rounded-full bg-violet-950"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
         aria-label={label ?? "Mastery"}
       >
-        <div className={`h-full ${certified ? "bg-emerald-400" : "bg-violet-400"}`} style={{ width: `${percent}%` }} />
+        <div
+          className={`bar-grow h-full ${certified ? "bg-gradient-to-r from-emerald-500 to-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.8)]" : "bg-gradient-to-r from-violet-500 to-violet-300"}`}
+          style={{ width: `${percent}%` }}
+        />
         <div className="absolute inset-y-0 w-0.5 bg-white/70" style={{ left: `${CERTIFIED_AT * 100}%` }} />
       </div>
     </div>

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
+import { BubbleBackground } from "@/components/bubble-background";
 import { LoginForm } from "@/components/login-form";
+import { LoginStage } from "@/components/login-stage";
 import { db } from "@/lib/db";
 import { employees } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
@@ -17,14 +19,26 @@ export default async function LoginPage() {
     .all();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-6 p-8 text-center">
-      <h1 className="text-4xl font-bold">Conjuring Cauldron</h1>
-      <p>Demo login. Pick a seeded account to explore the employee or manager view.</p>
-      {accounts.length ? (
-        <LoginForm accounts={accounts} />
-      ) : (
-        <p role="alert">No demo accounts yet. Run <code>npm run db:push</code> and <code>npm run db:seed</code>.</p>
-      )}
-    </main>
+    <LoginStage>
+      <BubbleBackground />
+      <main className="relative z-10 mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-7 p-8 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-300/80">A witch&apos;s café</p>
+          <h1 className="title-glow pb-3 pt-1 text-5xl font-extrabold leading-[1.2] tracking-tight sm:text-6xl">Conjuring Cauldron</h1>
+          <p className="text-lg text-violet-100/90">Train. Evaluate. Schedule.</p>
+        </div>
+
+        <div className="float-card w-full max-w-sm rounded-2xl border border-emerald-300/25 bg-violet-950/55 p-6 shadow-[0_0_60px_-12px_rgba(16,185,129,0.45)] backdrop-blur-md">
+          <p className="mb-4 text-sm text-violet-200">Demo login: pick a seeded account to explore the employee or manager view.</p>
+          {accounts.length ? (
+            <LoginForm accounts={accounts} />
+          ) : (
+            <p role="alert">
+              No demo accounts yet. Run <code>npm run db:push</code> and <code>npm run db:seed</code>.
+            </p>
+          )}
+        </div>
+      </main>
+    </LoginStage>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { Spinner, Thinking } from "@/components/ui";
 
 type Proposal = {
   summary: string;
@@ -56,7 +57,7 @@ export function ScheduleAssistant() {
       setError(err instanceof Error ? err.message : "The assistant could not answer.");
     } finally {
       setBusy(false);
-      setTimeout(() => endRef.current?.scrollIntoView({ block: "nearest" }), 50);
+      setTimeout(() => endRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 50);
     }
   }
 
@@ -94,7 +95,7 @@ export function ScheduleAssistant() {
         </p>
       </div>
 
-      <div className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto rounded-lg border border-violet-400/30 bg-violet-950/30 p-4" aria-live="polite">
+      <div className="chat-scroll flex max-h-[28rem] flex-col gap-3 overflow-y-auto rounded-lg border border-violet-400/30 bg-violet-950/30 p-4" aria-live="polite">
         {messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map((suggestion) => (
@@ -112,10 +113,10 @@ export function ScheduleAssistant() {
         )}
 
         {messages.map((m, index) => (
-          <div key={index} className={m.role === "user" ? "self-end" : "self-start"}>
+          <div key={index} className={`msg-in ${m.role === "user" ? "self-end" : "self-start"}`}>
             <div
               className={`max-w-prose whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
-                m.role === "user" ? "bg-violet-600 text-white" : "bg-violet-900/60"
+                m.role === "user" ? "bg-emerald-700 text-white" : "bg-violet-900/60"
               }`}
             >
               {m.text}
@@ -152,7 +153,7 @@ export function ScheduleAssistant() {
                       disabled={applyingIndex !== null}
                       className="mt-3 rounded bg-emerald-500 px-4 py-1.5 font-semibold text-black disabled:opacity-50"
                     >
-                      {applyingIndex === index ? "Applying..." : "Apply changes"}
+                      {applyingIndex === index ? (<><Spinner />Applying...</>) : "Apply changes"}
                     </button>
                   ))}
               </div>
@@ -160,7 +161,7 @@ export function ScheduleAssistant() {
           </div>
         ))}
 
-        {busy && <p className="text-sm text-violet-300">Thinking...</p>}
+        {busy && <Thinking />}
         <div ref={endRef} />
       </div>
 
@@ -188,7 +189,7 @@ export function ScheduleAssistant() {
           placeholder="Ask about the schedule..."
           className="flex-1 rounded border border-violet-400/40 bg-violet-950/40 p-2 text-sm"
         />
-        <button type="submit" disabled={busy || !input.trim()} className="rounded bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-50">
+        <button type="submit" disabled={busy || !input.trim()} className="rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110 disabled:opacity-50">
           Send
         </button>
       </form>

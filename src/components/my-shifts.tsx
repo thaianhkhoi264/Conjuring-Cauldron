@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { MyShift, Offer } from "@/lib/calloffs";
+import { Spinner } from "@/components/ui";
 
 export function MyShifts({ shifts }: { shifts: MyShift[] }) {
   const router = useRouter();
@@ -85,7 +86,7 @@ export function MyShifts({ shifts }: { shifts: MyShift[] }) {
                   />
                 </label>
                 <button type="submit" disabled={busy} className="rounded bg-amber-500 px-3 py-2 font-semibold text-black disabled:opacity-50">
-                  {busy ? "Sending..." : "Confirm call-off"}
+                  {busy ? (<><Spinner />Sending...</>) : "Confirm call-off"}
                 </button>
                 <button type="button" onClick={() => setOpenId(null)} className="rounded border border-violet-400/40 px-3 py-2">
                   Keep my shift

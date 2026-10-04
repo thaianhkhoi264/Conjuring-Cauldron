@@ -73,7 +73,7 @@ export default async function EmployeeHome() {
         <Link href="/employee/evaluation" className="mr-3 mt-4 inline-block rounded border border-violet-400/60 px-4 py-2">
           View my full evaluation
         </Link>
-        <Link href="/employee/training" className="mt-4 inline-block rounded bg-violet-500 px-4 py-2 font-semibold text-white">
+        <Link href="/employee/training" className="mt-4 inline-block rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110">
           {user.isNew && certified.length === 0 ? "Start training" : "Go to training"}
         </Link>
       </section>

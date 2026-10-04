@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { InboxItem } from "@/lib/calloffs";
+import { Spinner, EmptyState } from "@/components/ui";
 
 export function CalloffInbox({ items }: { items: InboxItem[] }) {
   const router = useRouter();
@@ -30,7 +31,11 @@ export function CalloffInbox({ items }: { items: InboxItem[] }) {
   }
 
   if (items.length === 0) {
-    return <p className="rounded border border-violet-400/30 bg-violet-950/30 p-3 text-sm">No open call-offs. 🎉</p>;
+    return (
+      <EmptyState icon="🎉" title="No open call-offs">
+        Everyone is on their shift.
+      </EmptyState>
+    );
   }
 
   return (
@@ -83,7 +88,7 @@ export function CalloffInbox({ items }: { items: InboxItem[] }) {
                             c.id === firstProposed?.id ? "bg-emerald-500 text-black" : "border border-violet-400/60"
                           }`}
                         >
-                          {busyId === c.id ? "Sending..." : c.id === firstProposed?.id ? "Approve" : "Approve instead"}
+                          {busyId === c.id ? (<><Spinner />Sending...</>) : c.id === firstProposed?.id ? "Approve" : "Approve instead"}
                         </button>
                       )}
                     </div>

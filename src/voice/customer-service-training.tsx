@@ -73,7 +73,7 @@ export function CustomerServiceTraining({ initialScore }: { initialScore: number
         <p className="mt-3 rounded-lg bg-slate-950/50 p-3 text-sm text-violet-100"><span className="font-semibold">Goal:</span> {selected.goal}</p>
 
         {status === "idle" || status === "ended" || status === "error" ? (
-          <button type="button" onClick={begin} className="mt-5 rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400">
+          <button type="button" onClick={begin} className="mt-5 rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:brightness-110">
             Start practice call
           </button>
         ) : null}

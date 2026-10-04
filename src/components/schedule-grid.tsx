@@ -1,5 +1,6 @@
 import { SLOT_TIMES } from "@/lib/slots";
 import type { ScheduleViewShift } from "@/lib/scheduling/store";
+import { EmptyState } from "@/components/ui";
 
 const SLOTS = ["open", "mid", "close"] as const;
 const STATIONS = ["food", "drink", "cs"] as const;
@@ -43,12 +44,12 @@ function Cell({ shift }: { shift: ScheduleViewShift | undefined }) {
               key={row.key}
               className={`rounded px-2 py-1 text-xs ${
                 row.kind === "gap"
-                  ? "border border-red-400 bg-red-950/60 text-red-200"
+                  ? "chip-gap border border-red-400 bg-red-950/60 text-red-200"
                   : row.kind === "shadow"
                     ? "border border-dashed border-violet-300/60 bg-violet-950/40 text-violet-200"
                     : row.kind === "off"
                       ? "bg-zinc-800 text-zinc-400 line-through"
-                      : "bg-violet-800/70"
+                      : `chip-${row.station}`
               }`}
             >
               <span className="font-semibold">{STATION_LABEL[row.station]}</span>: {row.text}
@@ -69,12 +70,14 @@ export function ScheduleGrid({ shifts }: { shifts: ScheduleViewShift[] }) {
   return (
     <div>
       {!hasAssignments && (
-        <p className="mb-3 rounded border border-violet-400/40 bg-violet-950/40 p-3 text-sm">
-          No schedule yet. Press <strong>Generate schedule</strong> to staff the week from your team&apos;s certified skills.
-        </p>
+        <div className="mb-3">
+          <EmptyState icon="📜" title="No schedule yet">
+            Press <strong>Generate schedule</strong> to staff the week from your team&apos;s certified skills.
+          </EmptyState>
+        </div>
       )}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+      <div className="table-wrap overflow-x-auto">
+        <table className="data-table w-full min-w-[56rem] text-left text-sm">
           <caption className="sr-only">Weekly schedule by day and shift</caption>
           <thead>
             <tr>
@@ -104,7 +107,7 @@ export function ScheduleGrid({ shifts }: { shifts: ScheduleViewShift[] }) {
         </table>
       </div>
       <p className="mt-2 text-xs text-violet-300">
-        Solid = certified anchor. Dashed = new hire shadowing beside an anchor. Red = still needs cover.
+        Solid = certified anchor (amber food, teal drinks, indigo register). Dashed = new hire shadowing beside an anchor. Red = still needs cover.
       </p>
     </div>
   );
