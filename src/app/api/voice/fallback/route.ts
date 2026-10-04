@@ -4,10 +4,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { callSessions } from "@/lib/db/schema";
 import { currentDemoTime } from "@/lib/mastery";
+import { forbidden, getSessionUser, unauthorized } from "@/lib/session";
 import { getVoiceScenario } from "@/voice/scenarios";
 
 /** Stores only the checked-in fallback transcript; clients cannot submit one. */
 export async function POST(request: Request) {
+  const user = getSessionUser(request);
+  if (!user) return unauthorized();
+  if (user.role !== "employee") return forbidden();
+
   const body = (await request.json()) as { sessionId?: string };
   if (!body.sessionId) return NextResponse.json({ error: "A call session id is required." }, { status: 400 });
   if (process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY && process.env.VAPI_ASSISTANT_ID) {
@@ -17,6 +22,10 @@ export async function POST(request: Request) {
   const session = db.select().from(callSessions).where(eq(callSessions.id, body.sessionId)).get();
   const scenario = session ? getVoiceScenario(session.scenarioId) : undefined;
   if (!session || !scenario) return NextResponse.json({ error: "Unknown call session." }, { status: 404 });
+  if (session.employeeId !== user.id) return forbidden();
+  if (session.transcriptJson || session.rubricJson || session.score !== null) {
+    return NextResponse.json({ error: "This call has already been recorded or evaluated." }, { status: 409 });
+  }
 
   const now = currentDemoTime();
   db.update(callSessions)
