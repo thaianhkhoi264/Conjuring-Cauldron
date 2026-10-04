@@ -72,6 +72,6 @@ export async function POST(request: Request) {
     mistakes: judged.mistakes,
     coaching: judged.coaching,
     judgedBy: judged.source,
-    mastery: { score: result.score, certified: result.certified },
+    mastery: { score: result.score, certified: result.certified, coverage: result.coverage },
   });
 }

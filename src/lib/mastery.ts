@@ -8,6 +8,30 @@ import type { Station } from "@/lib/db/types";
 export const CERTIFICATION_THRESHOLD = 0.8;
 const NEW_WEIGHT = 0.5;
 
+/**
+ * Food and drink need breadth: one recipe made perfectly does not qualify someone for a whole station. Until an
+ * employee has passed (80% or better) at least this many different recipes in the station, their mastery is held
+ * just under the certification line, however well they did. Customer service has no recipes and is unaffected.
+ */
+export const RECIPES_TO_CERTIFY = 3;
+export const UNCERTIFIED_CAP = 0.79;
+
+export type RecipeCoverage = { passed: number; needed: number };
+
+/** How many different recipes in this station the employee has passed (best attempt at 80% or more). */
+export function recipeCoverage(employeeId: string, station: Station, executor: DbExecutor = db): RecipeCoverage {
+  const best = new Map<string, number>();
+  for (const row of executor
+    .select({ recipeId: attempts.recipeId, score: attempts.score })
+    .from(attempts)
+    .where(and(eq(attempts.employeeId, employeeId), eq(attempts.station, station)))
+    .all()) {
+    if (row.recipeId) best.set(row.recipeId, Math.max(best.get(row.recipeId) ?? 0, row.score));
+  }
+  const passed = [...best.values()].filter((score) => score >= CERTIFICATION_THRESHOLD).length;
+  return { passed, needed: station === "cs" ? 0 : RECIPES_TO_CERTIFY };
+}
+
 /** The shared `db` or the transaction handle passed to `db.transaction` callbacks. */
 export type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -40,9 +64,13 @@ export function applyScore(
     .where(and(eq(mastery.employeeId, employeeId), eq(mastery.station, station)))
     .get();
 
-  const next = existing && existing.attempts > 0
+  let next = existing && existing.attempts > 0
     ? NEW_WEIGHT * score + (1 - NEW_WEIGHT) * existing.score
     : score;
+
+  // Not enough different recipes passed yet: stay just below certification.
+  const coverage = recipeCoverage(employeeId, station, executor);
+  if (coverage.passed < coverage.needed) next = Math.min(next, UNCERTIFIED_CAP);
 
   if (existing) {
     executor.update(mastery)
@@ -55,7 +83,7 @@ export function applyScore(
       .run();
   }
 
-  return { score: next, certified: next >= CERTIFICATION_THRESHOLD };
+  return { score: next, certified: next >= CERTIFICATION_THRESHOLD, coverage };
 }
 
 export type RecordAttemptInput = {

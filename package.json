@@ -20,6 +20,7 @@
     "verify:scheduler": "tsx scripts/verify-scheduler.ts",
     "verify:calloffs": "tsx scripts/verify-calloffs.ts",
     "verify:db-upgrade": "tsx scripts/verify-db-upgrade.ts",
+    "verify:breadth": "tsx scripts/verify-recipe-breadth.ts",
     "verify:clock": "tsx scripts/verify-demo-clock.ts",
     "verify:experience": "tsx scripts/verify-experience-preferences.ts",
     "verify:evaluation": "tsx scripts/verify-evaluation.ts",

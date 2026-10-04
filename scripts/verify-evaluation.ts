@@ -219,11 +219,25 @@ async function main() {
   });
   const trained = getEvaluation("finch")!;
   assert.equal(trained.hasData, true);
-  assert.ok(trained.strengths.some((s) => s.startsWith("Drinks: 95%")));
-  assert.match(trained.schedulingStatus, /Certified and waiting/);
+  assert.ok(!/Certified and waiting/.test(trained.schedulingStatus), "one perfect recipe is not enough to certify a station");
+  assert.ok(!trained.strengths.some((s) => /certified/.test(s)), "and is not reported as a certified strength");
+
+  // Two more different recipes at 80%+ and the station certifies.
+  for (const recipeId of ["love-potion-latte", "dragons-breath-cider"]) {
+    recordAttempt({
+      employeeId: "finch",
+      station: "drink",
+      score: 0.9,
+      recipeId,
+      feedback: { accuracy: 1, speed: 1, mistakes: [], facts: { missing: [], extra: [], outOfOrder: [] } },
+    });
+  }
+  const certified = getEvaluation("finch")!;
+  assert.ok(certified.strengths.some((s) => s.startsWith("Drinks:") && /certified/.test(s)));
+  assert.match(certified.schedulingStatus, /Certified and waiting/);
 
   // The narrative never throws and falls back when Gemini is unavailable.
-  const narrative = await writeNarrative(trained);
+  const narrative = await writeNarrative(certified);
   assert.equal(narrative.source, "fallback");
   assert.ok(narrative.summary.length > 0);
   assert.equal((await writeNarrative(getEvaluation("finch")!)).source, "fallback");

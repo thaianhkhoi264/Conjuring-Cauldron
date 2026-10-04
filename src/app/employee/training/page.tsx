@@ -26,7 +26,7 @@ export default async function TrainingHub() {
         </Link>
         <h1 className="mt-2 text-2xl font-bold">Training chapters</h1>
         <p className="mt-1 text-sm text-violet-200">
-          Reach 80% in any chapter to be certified and added to the schedule. You can train the others at any time.
+          Get certified in a chapter and you are added to the schedule. Customer Service: 80% on a call. Food and Drinks: 80% or better on 3 different recipes. You can train the others at any time.
         </p>
         {anyCertified && <p className="mt-2 text-sm text-emerald-300">You are certified on at least one station.</p>}
       </header>

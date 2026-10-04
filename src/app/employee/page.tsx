@@ -43,7 +43,7 @@ export default async function EmployeeHome() {
             {stations.some((s) => s.score !== null) ? "Keep training to join the schedule" : "Start your training"}
           </h2>
           <p className="mt-1 text-sm text-emerald-100">
-            Reach 80% in any one chapter (Food, Drinks or Customer Service) and you will be added to the schedule. About 5 minutes each.
+            Reach 80% in one chapter and you will be added to the schedule: Customer Service with one good call, Food or Drinks by passing 3 different recipes. About 5 minutes each.
           </p>
           <Link href="/employee/training" className="mt-3 inline-block rounded bg-emerald-500 px-4 py-2 font-semibold text-black">
             Go to training
@@ -91,7 +91,7 @@ export default async function EmployeeHome() {
           {certified.length
             ? `Certified on: ${certified.join(", ")}. You are ready to be scheduled there.`
             : user.isNew
-              ? "Welcome! Reach 80% in any chapter to be added to the schedule."
+              ? "Welcome! Pass a chapter (Food and Drinks need 3 different recipes at 80%) to be added to the schedule."
               : "Keep training to stay certified."}
         </p>
         <Link href="/employee/evaluation" className="mr-3 mt-4 inline-block rounded border border-violet-400/60 px-4 py-2">
