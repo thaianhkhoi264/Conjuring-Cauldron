@@ -18,13 +18,12 @@ export function RetestsDue({ items }: { items: RetestDue[] }) {
               <strong>{item.label}</strong>: {Math.round(item.score * 100)}%
               {item.certified ? "" : " (below the 80% certification line)"}, last trained {item.daysSince} days ago
             </span>
-            {item.station === "cs" ? (
-              <span className="text-xs text-amber-100">Customer service retest coming soon</span>
-            ) : (
-              <Link href={`/employee/training/${item.station}`} className="rounded border border-amber-300/60 px-3 py-1">
-                Retest now
-              </Link>
-            )}
+            <Link
+              href={item.station === "cs" ? "/employee/training/customer-service" : `/employee/training/${item.station}`}
+              className="rounded border border-amber-300/60 px-3 py-1"
+            >
+              Retest now
+            </Link>
           </li>
         ))}
       </ul>
