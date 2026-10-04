@@ -153,3 +153,16 @@ export async function runAgent({
 
   throw new Error(`Agent did not finish within ${maxSteps} steps.`);
 }
+
+/** Model ids the configured key can call for text generation. Used by `npm run verify:llm`. */
+export async function listGenerativeModels(): Promise<string[]> {
+  const pager = await getClient().models.list({ config: { pageSize: 100 } });
+  const names: string[] = [];
+  for await (const model of pager) {
+    const actions = model.supportedActions ?? [];
+    if (model.name && (actions.length === 0 || actions.includes("generateContent"))) {
+      names.push(model.name.replace(/^models\//, ""));
+    }
+  }
+  return names.sort();
+}
