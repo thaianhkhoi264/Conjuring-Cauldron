@@ -4,7 +4,7 @@ import Vapi from "@vapi-ai/web";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { TranscriptTurn } from "@/lib/db/types";
-import { mergeTranscript } from "./transcript";
+import { mergeTranscript, vapiMessageToTurn } from "./transcript";
 import type { VapiSessionConfig } from "./vapi";
 
 type StartResponse = {
@@ -14,16 +14,6 @@ type StartResponse = {
 };
 
 type CallStatus = "idle" | "connecting" | "live" | "demo" | "ended" | "error";
-
-function toTurn(message: { type?: string; role?: string; transcript?: string; message?: string }): TranscriptTurn | undefined {
-  if (message.type !== "transcript" && message.type !== "conversation-update") return undefined;
-  const text = message.transcript ?? message.message;
-  if (!text) return undefined;
-  return {
-    speaker: message.role === "assistant" ? "employee" : "customer",
-    text,
-  };
-}
 
 /** Browser adapter for the Customer Service chapter UI. */
 export function useVapiCall() {
@@ -67,7 +57,7 @@ export function useVapiCall() {
         setStatus("ended");
       });
       voiceClient.on("message", (message) => {
-        const turn = toTurn(message);
+        const turn = vapiMessageToTurn(message);
         if (turn) setTranscript((current) => mergeTranscript(current, [turn]));
       });
       voiceClient.on("error", (nextError) => {

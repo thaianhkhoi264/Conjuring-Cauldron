@@ -58,7 +58,7 @@ Never commit this file or paste keys into chat, issues or PRs.
 | `npm run verify:agent-tools` | checks the schedule assistant's tools and the Apply step without calling Gemini |
 | `npm run verify:agent-live` | runs the schedule assistant against real Gemini on a throwaway database (needs a working key) |
 | `npm run verify:llm` | checks your Gemini setup end to end (lists available models if the model ids are not set yet) |
-| `npm run verify:voice`, `verify:chatbot` | Agent A's feature checks |
+| `npm run verify:voice`, `verify:voice-mapping`, `verify:chatbot` | voice call and chatbot checks (voice-mapping covers who is the trainee and who is the witch) |
 
 > **Warning:** the `verify:*` scripts on `main` may delete data from your local database. Run them with `DATABASE_URL` pointed at a throwaway file until the voice fixes in PLAN.md section 13 are merged.
 

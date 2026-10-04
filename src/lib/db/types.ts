@@ -21,4 +21,6 @@ export type CustomerServiceRubric = {
   professional_tone: RubricDimension;
   upsell_or_suggestion: RubricDimension;
   score: number;
+  /** Who produced the scores: Gemini, or the computed rubric used for the approved sample call. */
+  judgedBy?: "gemini" | "fallback";
 };
