@@ -2,8 +2,12 @@ import assert from "node:assert/strict";
 
 import { createScratchDatabase } from "./scratch-db";
 
-async function requestJson(url: string, body: unknown, headers?: HeadersInit) {
-  return new Request(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+async function requestJson(url: string, body: unknown, employeeId?: string, headers?: HeadersInit) {
+  const { createSessionToken, SESSION_COOKIE } = await import("../src/lib/session");
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set("content-type", "application/json");
+  if (employeeId) requestHeaders.set("cookie", `${SESSION_COOKIE}=${createSessionToken(employeeId)}`);
+  return new Request(url, { method: "POST", headers: requestHeaders, body: JSON.stringify(body) });
 }
 
 async function main() {
@@ -24,9 +28,11 @@ async function main() {
   db.insert(demoClock).values({ id: 1, now: demoNow }).run();
   db.insert(employees).values({ id: "voice-test-employee", name: "Voice Test", role: "employee", isNew: true, hoursCapWeekly: 20 }).run();
 
-  const invalidScenario = await createVoiceSession(await requestJson("http://localhost/api/voice/session", { employeeId: "voice-test-employee", scenarioId: "invalid" }));
+  const anonymous = await createVoiceSession(await requestJson("http://localhost/api/voice/session", { scenarioId: "wrong-order" }));
+  assert.equal(anonymous.status, 401, "voice sessions require a signed-in employee");
+  const invalidScenario = await createVoiceSession(await requestJson("http://localhost/api/voice/session", { scenarioId: "invalid" }, "voice-test-employee"));
   assert.equal(invalidScenario.status, 400, "invalid scenarios must be rejected");
-  const sessionResponse = await createVoiceSession(await requestJson("http://localhost/api/voice/session", { employeeId: "voice-test-employee", scenarioId: "wrong-order" }));
+  const sessionResponse = await createVoiceSession(await requestJson("http://localhost/api/voice/session", { scenarioId: "wrong-order" }, "voice-test-employee"));
   assert.equal(sessionResponse.status, 200, "valid voice sessions must start");
   const session = await sessionResponse.json() as { sessionId: string; vapi: { mode: string } };
   assert.equal(session.vapi.mode, "demo", "missing Vapi credentials must fall back safely");
@@ -34,8 +40,10 @@ async function main() {
 
   const rejectedWebhook = await receiveVoiceWebhook(await requestJson("http://localhost/api/voice/webhook", { callSessionId: session.sessionId }));
   assert.equal(rejectedWebhook.status, 401, "webhooks without a configured secret must be rejected");
-  const fallbackResponse = await storeFallback(await requestJson("http://localhost/api/voice/fallback", { sessionId: session.sessionId }));
+  const fallbackResponse = await storeFallback(await requestJson("http://localhost/api/voice/fallback", { sessionId: session.sessionId }, "voice-test-employee"));
   assert.equal(fallbackResponse.status, 200, "demo mode may store only its checked-in fallback transcript");
+  const duplicateFallback = await storeFallback(await requestJson("http://localhost/api/voice/fallback", { sessionId: session.sessionId }, "voice-test-employee"));
+  assert.equal(duplicateFallback.status, 409, "fallback must not overwrite a stored call");
   const stored = db.select().from(callSessions).get();
   assert.equal(stored?.endedAt, demoNow, "fallback completion must use the demo clock");
   assert.deepEqual(JSON.parse(stored?.transcriptJson ?? "[]"), fallbackTranscript, "clients cannot supply the fallback transcript");

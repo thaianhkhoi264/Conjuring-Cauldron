@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { attempts, callSessions } from "@/lib/db/schema";
 import { currentDemoTime } from "@/lib/mastery";
+import type { DbExecutor } from "@/lib/mastery";
 import type { CustomerServiceRubric, RubricDimension, TranscriptTurn } from "@/lib/db/types";
 import { restaurantContext } from "./scenarios";
 
@@ -41,7 +42,7 @@ export const customerServiceRubricSchema = {
 } as const;
 
 export type JsonGenerator = <T>(schema: object, prompt: string) => Promise<T>;
-export type ScoreApplier = (employeeId: string, station: "cs", score: number, source: string) => Promise<void> | void;
+export type ScoreApplier = (employeeId: string, station: "cs", score: number, source: string, executor?: DbExecutor) => Promise<void> | void;
 
 const dimensions = [
   "greeting_and_warmth",
@@ -86,6 +87,45 @@ export function validateCustomerServiceRubric(value: unknown): CustomerServiceRu
   return { ...completeRubric, score: calculateCustomerServiceScore(completeRubric) };
 }
 
+/**
+ * A deterministic rubric for the checked-in demo replay. It is used only when
+ * Gemini is unavailable, so the rehearsal path still produces useful feedback.
+ */
+export function fallbackCustomerServiceRubric(transcript: TranscriptTurn[]): CustomerServiceRubric {
+  const employeeText = transcript
+    .filter((turn) => turn.speaker === "employee")
+    .map((turn) => turn.text.toLowerCase())
+    .join(" ");
+  const has = (...phrases: string[]) => phrases.some((phrase) => employeeText.includes(phrase));
+  const rubric: LlmRubric = {
+    greeting_and_warmth: {
+      score: has("welcome", "glad you asked") ? 5 : has("sorry", "understand") ? 4 : 2,
+      justification: has("welcome", "glad you asked") ? "Opened with a warm, customer-focused response." : "Acknowledged the customer promptly, though the opening could be warmer.",
+    },
+    order_accuracy: {
+      score: has("cider", "mandrake", "burger", "latte", "order") ? 5 : 2,
+      justification: has("cider", "mandrake", "burger", "latte", "order") ? "Addressed the specific item and concern accurately." : "Did not clearly confirm the item or concern.",
+    },
+    deescalation_and_empathy: {
+      score: has("sorry", "understand", "glad you asked") ? 5 : 2,
+      justification: has("sorry", "understand", "glad you asked") ? "Showed empathy and stayed calm under pressure." : "Needs a clearer acknowledgement of the customer's concern.",
+    },
+    problem_resolution: {
+      score: has("remake", "check with the kitchen", "check that it is hot") ? 5 : 2,
+      justification: has("remake", "check with the kitchen", "check that it is hot") ? "Provided a concrete, policy-aligned next step." : "Needs to offer a specific next step.",
+    },
+    professional_tone: {
+      score: has("right away", "absolutely", "of course", "please") ? 5 : 4,
+      justification: "Kept the response clear, respectful, and professional.",
+    },
+    upsell_or_suggestion: {
+      score: has("would you like", "another option") ? 4 : 0,
+      justification: has("would you like", "another option") ? "Made a relevant, low-pressure suggestion." : "No suggestion was needed in this situation.",
+    },
+  };
+  return { ...rubric, score: calculateCustomerServiceScore(rubric) };
+}
+
 export function customerServiceEvaluationPrompt(transcript: TranscriptTurn[]) {
   return `${restaurantContext}
 
@@ -123,9 +163,16 @@ export async function evaluateCustomerServiceSession(
   const transcript = session.transcriptJson ? (JSON.parse(session.transcriptJson) as TranscriptTurn[]) : [];
   if (!transcript.some((turn) => turn.speaker === "employee")) throw new Error("An employee transcript is required before evaluation.");
 
-  const rubric = validateCustomerServiceRubric(
-    await generateJson<LlmRubric>(customerServiceRubricSchema, customerServiceEvaluationPrompt(transcript)),
-  );
+  let rubric: CustomerServiceRubric;
+  let judgedBy: "gemini" | "fallback" = "gemini";
+  try {
+    rubric = validateCustomerServiceRubric(
+      await generateJson<LlmRubric>(customerServiceRubricSchema, customerServiceEvaluationPrompt(transcript)),
+    );
+  } catch {
+    rubric = fallbackCustomerServiceRubric(transcript);
+    judgedBy = "fallback";
+  }
   const endedAt = session.endedAt ? new Date(session.endedAt) : new Date(currentDemoTime());
   const durationSeconds = Math.max(0, Math.round((endedAt.getTime() - new Date(session.startedAt).getTime()) / 1000));
 
@@ -142,10 +189,10 @@ export async function evaluateCustomerServiceSession(
       score: rubric.score,
       feedbackJson: JSON.stringify(rubric),
       durationSeconds,
-      createdAt: currentDemoTime(),
+      createdAt: currentDemoTime(tx),
     }).run();
+    applyScore(session.employeeId, "cs", rubric.score, `call_session:${sessionId}`, tx);
   });
 
-  await applyScore(session.employeeId, "cs", rubric.score, `call_session:${sessionId}`);
-  return { rubric, score: rubric.score, reused: false };
+  return { rubric, score: rubric.score, judgedBy, reused: false };
 }
