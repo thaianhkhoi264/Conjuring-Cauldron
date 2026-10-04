@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EmployeeChatbot } from "@/components/employee-chatbot";
 import { MasteryBar } from "@/components/mastery-bar";
 import { MyShifts, ShiftOffers } from "@/components/my-shifts";
 import { RetestsDue } from "@/components/retests-due";
@@ -38,6 +39,8 @@ export default async function EmployeeHome() {
         </h2>
         <MyShifts shifts={shifts} />
       </section>
+
+      <EmployeeChatbot />
 
       <section className="rounded-lg border border-violet-400/40 bg-violet-950/40 p-5">
         <h2 className="mb-3 text-lg font-semibold">Your skills</h2>
