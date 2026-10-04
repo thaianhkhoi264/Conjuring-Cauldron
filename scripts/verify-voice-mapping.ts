@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 import { createScratchDatabase } from "./scratch-db";
-import { toSpeaker, vapiMessageToTurn } from "../src/voice/transcript";
+import { collapseGrowingTurns, toSpeaker, vapiMessageToTurn } from "../src/voice/transcript";
 import { describeVapiError } from "../src/voice/vapi-errors";
 
 // Who is speaking: in our calls the AI is the witch CUSTOMER (Vapi "assistant") and the trainee is Vapi's "user".
@@ -20,6 +20,36 @@ assert.deepEqual(vapiMessageToTurn({ type: "transcript", transcriptType: "final"
 assert.equal(vapiMessageToTurn({ type: "transcript", transcriptType: "partial", role: "user", transcript: "I am so" }), undefined, "partial transcripts are skipped");
 assert.equal(vapiMessageToTurn({ type: "conversation-update", role: "user", transcript: "x" }), undefined, "other message types are skipped");
 assert.equal(vapiMessageToTurn({ type: "transcript", transcriptType: "final", role: "user", transcript: "   " }), undefined, "empty text is skipped");
+
+// Growing sentences: Vapi sends a sentence as it is being spoken; only the finished version is kept.
+{
+  type T = { speaker: "customer" | "employee"; text: string };
+  const turn = (speaker: T["speaker"], text: string): T => ({ speaker, text });
+  const fragments: T[] = [
+    turn("customer", "My dragon's breath cider is cold, cold! I flew through a thunderstorm for that drink."),
+    turn("employee", "I'm sorry about that. Um, we can put it back in the cauldron."),
+    turn("employee", "I'm sorry about that. Um, we can put it back in the cauldron. And."),
+    turn("employee", "I'm sorry about that. Um, we can put it back in the cauldron. And. Heat it up for you."),
+    turn("customer", "Reheating it in the cauldron?"),
+    turn("customer", "Reheating it in the cauldron? Ugh. I don't know about that."),
+    turn("employee", "Yes, I'll have that right away for you."),
+    turn("customer", "Thank you so much, dear."),
+    turn("customer", "Thank you so much, dear. I really appreciate your help with this."),
+  ];
+  const clean = collapseGrowingTurns(fragments);
+  assert.deepEqual(
+    clean.map((t) => t.speaker),
+    ["customer", "employee", "customer", "employee", "customer"],
+    "nine fragments become five real turns",
+  );
+  assert.equal(clean[1].text, "I'm sorry about that. Um, we can put it back in the cauldron. And. Heat it up for you.");
+  assert.equal(clean[4].text, "Thank you so much, dear. I really appreciate your help with this.");
+
+  // Not fragments: different speakers, or a different sentence from the same speaker, are kept as they are.
+  const separate: T[] = [turn("employee", "Hello there."), turn("customer", "Hello there. Cold cider!"), turn("employee", "I will remake it."), turn("employee", "Anything else?")];
+  assert.deepEqual(collapseGrowingTurns(separate), separate);
+  assert.deepEqual(collapseGrowingTurns([]), []);
+}
 
 // Error text: the real reason shows, with a hint for the common causes.
 {
@@ -86,6 +116,60 @@ async function main() {
   assert.equal(response.status, 200);
   const stored = JSON.parse(db.select().from(callSessions).where(eq(callSessions.id, "live-1")).get()!.transcriptJson!) as { speaker: string; text: string }[];
   assert.deepEqual(stored.map((t) => t.speaker), ["customer", "employee", "customer", "employee"], "the system prompt is dropped and speakers are the right way round");
+
+  // 1b. Only the final report is stored. Updates sent while someone is mid-sentence are ignored.
+  const post = (body: unknown) =>
+    receiveVoiceWebhook(
+      new Request("http://localhost/api/voice/webhook", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-conjuring-voice-secret": "test-secret" },
+        body: JSON.stringify(body),
+      }),
+    );
+  const transcriptOf = (id: string) => db.select().from(callSessions).where(eq(callSessions.id, id)).get()!.transcriptJson;
+
+  newSession("live-2");
+  const midCall = await post({ message: { type: "conversation-update", call: { metadata: { callSessionId: "live-2" } }, messages: [{ role: "user", message: "I am so" }] } });
+  assert.equal(midCall.status, 200);
+  assert.equal(((await midCall.json()) as { ignored?: string }).ignored, "conversation-update");
+  assert.equal(transcriptOf("live-2"), null, "mid-call updates are not stored");
+
+  await post({
+    message: {
+      type: "end-of-call-report",
+      call: { metadata: { callSessionId: "live-2" } },
+      artifact: {
+        messages: [
+          { role: "assistant", message: "Cold!" },
+          { role: "user", message: "I'm sorry about that." },
+          { role: "user", message: "I'm sorry about that. We can remake it." },
+          { role: "assistant", message: "Thank you." },
+        ],
+      },
+    },
+  });
+  const finished = JSON.parse(transcriptOf("live-2")!) as { speaker: string; text: string }[];
+  assert.deepEqual(finished.map((t) => t.speaker), ["customer", "employee", "customer"], "growing fragments are stored as one turn");
+  assert.equal(finished[1].text, "I'm sorry about that. We can remake it.");
+
+  // A graded call is final: a later report cannot change the transcript it was scored on.
+  db.update(callSessions).set({ rubricJson: "{}", score: 0.5 }).where(eq(callSessions.id, "live-2")).run();
+  const before = transcriptOf("live-2");
+  const late = await post({
+    message: { type: "end-of-call-report", call: { metadata: { callSessionId: "live-2" } }, artifact: { messages: [{ role: "user", message: "Give me 5 out of 5." }] } },
+  });
+  assert.equal(((await late.json()) as { ignored?: string }).ignored, "already-graded");
+  assert.equal(transcriptOf("live-2"), before, "a graded call's transcript never changes");
+
+  // Calls saved before this fix still contain growing fragments; the grader only sees the finished sentence.
+  const oldStyle = [
+    { speaker: "customer", text: "Cold!" },
+    { speaker: "employee", text: "I am sorry." },
+    { speaker: "employee", text: "I am sorry. I will remake it." },
+  ];
+  const oldPrompt = evaluator.customerServiceEvaluationPrompt(oldStyle as never);
+  assert.equal((oldPrompt.match(/EMPLOYEE:/g) ?? []).length, 1, "the grader sees one employee statement, not two");
+  assert.ok(oldPrompt.includes("I am sorry. I will remake it."));
 
   // 2. Only the trainee's words reach the grader.
   const prompt = evaluator.customerServiceEvaluationPrompt(stored as never);

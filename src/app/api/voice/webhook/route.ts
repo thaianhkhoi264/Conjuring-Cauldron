@@ -4,8 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { callSessions } from "@/lib/db/schema";
 import { currentDemoTime } from "@/lib/mastery";
-import type { TranscriptTurn } from "@/lib/db/types";
-import { extractTranscript, mergeTranscript } from "@/voice/transcript";
+import { collapseGrowingTurns, extractTranscript } from "@/voice/transcript";
 
 type WebhookBody = {
   message?: {
@@ -37,14 +36,19 @@ export async function POST(request: Request) {
   const session = db.select().from(callSessions).where(eq(callSessions.id, sessionId)).get();
   if (!session) return NextResponse.json({ error: "Unknown call session." }, { status: 404 });
 
-  const existing = session.transcriptJson ? (JSON.parse(session.transcriptJson) as TranscriptTurn[]) : [];
-  const transcript = mergeTranscript(existing, extractTranscript(body));
+  // Only the end-of-call report carries the finished transcript. Vapi also sends updates while someone is still
+  // mid-sentence; storing those filled the transcript with growing fragments of the same sentence.
   const messageType = body.message?.type;
+  if (messageType !== "end-of-call-report") return NextResponse.json({ ok: true, ignored: messageType ?? "unknown" });
+  // A graded call is final: nothing may change the transcript it was scored on.
+  if (session.rubricJson) return NextResponse.json({ ok: true, ignored: "already-graded" });
+
+  const transcript = collapseGrowingTurns(extractTranscript(body));
 
   db.update(callSessions)
     .set({
-      transcriptJson: JSON.stringify(transcript),
-      ...(messageType === "end-of-call-report" ? { endedAt: currentDemoTime() } : {}),
+      ...(transcript.length ? { transcriptJson: JSON.stringify(transcript) } : {}),
+      endedAt: currentDemoTime(),
     })
     .where(eq(callSessions.id, sessionId))
     .run();
