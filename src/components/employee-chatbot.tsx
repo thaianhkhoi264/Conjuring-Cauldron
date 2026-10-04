@@ -7,7 +7,7 @@ import { Thinking } from "@/components/ui";
 type ChatMessage = { role: "employee" | "assistant"; text: string };
 type Pending = { assignmentId: string; message: string };
 
-const SUGGESTIONS = ["What is my schedule this week?", "How do I make a Cauldron Burger?", "What goes in a Love Potion Latte?"];
+const SUGGESTIONS = ["What is my schedule this week?", "How do I make a Cauldron Burger?", "I would rather work closing shifts on weekends"];
 
 export function EmployeeChatbot() {
   const router = useRouter();
@@ -29,10 +29,10 @@ export function EmployeeChatbot() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message, history, confirmAssignmentId }),
       });
-      const result = (await response.json()) as { text?: string; error?: string; pendingCalloff?: Pending | null; calledOff?: boolean };
+      const result = (await response.json()) as { text?: string; error?: string; pendingCalloff?: Pending | null; calledOff?: boolean; preferenceSubmitted?: boolean };
       setMessages((current) => [...current, { role: "assistant", text: result.text ?? result.error ?? "I could not answer that." }]);
       setPending(result.pendingCalloff ?? null);
-      if (result.calledOff) router.refresh(); // My shifts and the manager's inbox now reflect it
+      if (result.calledOff || result.preferenceSubmitted) router.refresh(); // My shifts, preferences and the manager's inboxes now reflect it
     } catch {
       setMessages((current) => [...current, { role: "assistant", text: "I could not reach the assistant. Please check your connection and try again." }]);
     } finally {
@@ -54,7 +54,7 @@ export function EmployeeChatbot() {
       <h2 id="chat-heading" className="text-lg font-semibold">
         Cauldron assistant
       </h2>
-      <p className="mt-1 text-sm text-violet-200">Ask about a recipe, your own shifts, or request a call-off.</p>
+      <p className="mt-1 text-sm text-violet-200">Ask about a recipe, your own shifts, your shift preferences, or request a call-off.</p>
 
       <div className="chat-scroll mt-4 flex max-h-96 flex-col gap-2 overflow-y-auto" aria-live="polite">
         {messages.length === 0 && (

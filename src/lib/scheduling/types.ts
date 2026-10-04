@@ -1,4 +1,5 @@
 import type { AssignmentRole, ShiftSlot, Station } from "@/lib/db/types";
+import type { EnginePreference } from "./preference";
 
 export type { AssignmentRole, ShiftSlot, Station };
 
@@ -18,6 +19,8 @@ export type EngineEmployee = {
   hoursCap: number;
   skills: Record<Station, number>;
   availability: EngineAvailability[];
+  /** Accepted soft preferences. Absent means no preference. */
+  preference?: EnginePreference;
 };
 
 export type EngineShift = {
@@ -71,5 +74,7 @@ export type ScheduleResult = {
     anchorsFilled: number;
     shadows: number;
     hoursByEmployee: Record<string, number>;
+    /** Assignments that match / go against an accepted preference. */
+    preferences?: { matched: number; against: number };
   };
 };

@@ -4,9 +4,11 @@ import { db } from "@/lib/db";
 import { assignments, availability, employees, mastery, shifts } from "@/lib/db/schema";
 import type { StationRequirements } from "@/lib/db/types";
 import { currentDemoTime } from "@/lib/mastery";
+import { getActivePreferences } from "@/lib/preferences";
 import { SLOT_HOURS } from "@/lib/slots";
 import { generateSchedule } from "./engine";
 import { buildScheduleInput } from "./input";
+import { describePreference } from "./preference";
 import { validateSchedule } from "./rules";
 import { inWindow, missingShifts, planningWindow } from "./weeks";
 import type { EngineAssignment, ScheduleInput, ScheduleResult } from "./types";
@@ -33,6 +35,7 @@ export function loadScheduleInput(): ScheduleInput {
     mastery: db.select().from(mastery).all(),
     availability: db.select().from(availability).all(),
     shifts: db.select().from(shifts).all().filter((s) => inWindow(s.date, window)),
+    preferences: getActivePreferences(),
   });
 }
 
@@ -134,12 +137,17 @@ export type SkillMatrixRow = {
   hoursScheduled: number;
   /** null = not started */
   skills: Record<"food" | "drink" | "cs", number | null>;
+  /** Shifts worked per station (a shadow shift counts half). */
+  experience: Record<"food" | "drink" | "cs", number>;
+  /** Accepted shift preferences in words ("No preferences" when none). */
+  preference: string;
 };
 
 /** Staff with their mastery per station and scheduled hours, for the manager's team view. */
 export function getSkillMatrix(): SkillMatrixRow[] {
   const staff = db.select().from(employees).where(eq(employees.role, "employee")).all();
   const masteryRows = db.select().from(mastery).all();
+  const preferences = getActivePreferences();
   const hours = new Map<string, number>();
   const window = currentWindow();
   const inWindowIds = new Set(db.select().from(shifts).all().filter((s) => inWindow(s.date, window)).map((s) => s.id));
@@ -150,7 +158,12 @@ export function getSkillMatrix(): SkillMatrixRow[] {
   return staff
     .map((e) => {
       const skills: SkillMatrixRow["skills"] = { food: null, drink: null, cs: null };
-      for (const m of masteryRows) if (m.employeeId === e.id) skills[m.station] = m.score;
+      const experience: SkillMatrixRow["experience"] = { food: 0, drink: 0, cs: 0 };
+      for (const m of masteryRows) {
+        if (m.employeeId !== e.id) continue;
+        skills[m.station] = m.score;
+        experience[m.station] = m.experience;
+      }
       return {
         id: e.id,
         name: e.name,
@@ -158,6 +171,8 @@ export function getSkillMatrix(): SkillMatrixRow[] {
         hoursCap: e.hoursCapWeekly,
         hoursScheduled: hours.get(e.id) ?? 0,
         skills,
+        experience,
+        preference: describePreference(preferences.get(e.id)),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));

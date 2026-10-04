@@ -19,6 +19,7 @@
     "verify:scheduler": "tsx scripts/verify-scheduler.ts",
     "verify:calloffs": "tsx scripts/verify-calloffs.ts",
     "verify:clock": "tsx scripts/verify-demo-clock.ts",
+    "verify:experience": "tsx scripts/verify-experience-preferences.ts",
     "verify:evaluation": "tsx scripts/verify-evaluation.ts",
     "verify:chat-safety": "tsx scripts/verify-chat-safety.ts",
     "verify:llm": "tsx scripts/verify-llm.ts",

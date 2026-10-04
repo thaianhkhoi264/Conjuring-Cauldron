@@ -47,9 +47,30 @@ export const mastery = sqliteTable(
     score: real("score").notNull(),
     lastTrainedAt: text("last_trained_at"),
     attempts: integer("attempts").notNull().default(0),
+    /** Shifts worked at this station (as a shadow trainee a shift counts half). Slows decay and retests. */
+    experience: real("experience").notNull().default(0),
+    /** The last demo day a shift at this station was worked; counts as practice for the decay clock. */
+    lastWorkedAt: text("last_worked_at"),
   },
   (table) => [uniqueIndex("mastery_employee_station_idx").on(table.employeeId, table.station)],
 );
+
+/**
+ * An employee's request for scheduling preferences (shifts and days they would rather work).
+ * A manager accepts or rejects it; the latest accepted request is the one the scheduler uses.
+ */
+export const preferenceRequests = sqliteTable("preference_requests", {
+  id: text("id").primaryKey(),
+  employeeId: text("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  likedSlotsJson: text("liked_slots_json").notNull().default("[]"),
+  avoidedSlotsJson: text("avoided_slots_json").notNull().default("[]"),
+  dayPref: text("day_pref", { enum: ["any", "weekends", "weekdays"] }).notNull().default("any"),
+  note: text("note").notNull().default(""),
+  status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
+  managerNote: text("manager_note"),
+  createdAt: text("created_at").notNull(),
+  decidedAt: text("decided_at"),
+});
 
 export const callSessions = sqliteTable("call_sessions", {
   id: text("id").primaryKey(),

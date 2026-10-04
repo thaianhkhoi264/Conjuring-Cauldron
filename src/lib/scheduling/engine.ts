@@ -1,4 +1,5 @@
 import { SLOT_HOURS } from "@/lib/slots";
+import { fitReason, preferenceFit } from "./preference";
 import {
   canShadow,
   isAvailable,
@@ -40,6 +41,7 @@ const P_OVERLOAD = 4; // discourage filling anyone past 80% of their cap, so cal
 const SLACK_RATIO = 0.8;
 const P_SHIFT_SPECIALTY = 3; // per other same-specialty employee on the same shift
 const P_DAY_SPECIALTY = 1.5; // grows with the square of same-specialty employees that day
+const W_PREFERENCE = 1.5; // nudge toward shifts and days an employee asked for (a soft preference, never a rule)
 const W_SHADOW_MENTOR = 1.5; // prefer pairing a shadow with a strong anchor
 const W_SHADOW_PROGRESS = 1; // prefer shadowing where the trainee is closest to certifying
 
@@ -147,7 +149,8 @@ function anchorScore(ctx: Context, employee: EngineEmployee, demand: Demand) {
   const counts = specialtyCounts(ctx, employee, shift);
   return (
     W_FAIRNESS * (1 - ratioAfter) +
-    W_SKILL * employee.skills[demand.station] -
+    W_SKILL * employee.skills[demand.station] +
+    W_PREFERENCE * preferenceFit(employee.preference, shift) -
     P_OVERLOAD * Math.max(0, ratioAfter - SLACK_RATIO) -
     P_SHIFT_SPECIALTY * counts.shift -
     P_DAY_SPECIALTY * counts.day * counts.day
@@ -168,9 +171,10 @@ function bestCandidate(ctx: Context, demand: Demand, pool?: EngineEmployee[]) {
   return best;
 }
 
-function anchorNote(ctx: Context, e: EngineEmployee, station: Station) {
+function anchorNote(ctx: Context, e: EngineEmployee, station: Station, shift: EngineShift) {
   const hours = ctx.state.hoursOf(e.id);
-  return `Anchor: ${station} skill ${Math.round(e.skills[station] * 100)}%, ${hours}/${e.hoursCap}h.`;
+  const reason = fitReason(e.preference, shift);
+  return `Anchor: ${station} skill ${Math.round(e.skills[station] * 100)}%, ${hours}/${e.hoursCap}h.${reason ? ` ${reason}` : ""}`;
 }
 
 function place(ctx: Context, employee: EngineEmployee, demand: Demand, notes: Map<EngineAssignment, string>) {
@@ -181,7 +185,7 @@ function place(ctx: Context, employee: EngineEmployee, demand: Demand, notes: Ma
     role: "anchor",
   };
   ctx.state.add(assignment);
-  notes.set(assignment, anchorNote(ctx, employee, demand.station));
+  notes.set(assignment, anchorNote(ctx, employee, demand.station, ctx.state.shiftById.get(demand.shiftId)!));
   return assignment;
 }
 
@@ -285,7 +289,10 @@ function fillShadows(ctx: Context, shifts: EngineShift[], notes: Map<EngineAssig
           if (!canShadow(t, station, ctx.threshold) || !canWork(ctx, t, shift)) continue;
           const ratioAfter = (state.hoursOf(t.id) + SLOT_HOURS) / t.hoursCap;
           const score =
-            W_FAIRNESS * (1 - ratioAfter) + W_SHADOW_PROGRESS * t.skills[station] + W_SHADOW_MENTOR * mentor;
+            W_FAIRNESS * (1 - ratioAfter) +
+            W_SHADOW_PROGRESS * t.skills[station] +
+            W_SHADOW_MENTOR * mentor +
+            W_PREFERENCE * preferenceFit(t.preference, shift);
           if (score > bestScore + 1e-9 || (Math.abs(score - bestScore) <= 1e-9 && best && t.id < best.id)) {
             best = t;
             bestScore = score;
@@ -296,7 +303,7 @@ function fillShadows(ctx: Context, shifts: EngineShift[], notes: Map<EngineAssig
         state.add(shadow);
         notes.set(
           shadow,
-          `Shadow: learning ${station} (${Math.round(best.skills[station] * 100)}%, needs ${Math.round(ctx.threshold * 100)}%), paired with a ${Math.round(mentor * 100)}% anchor.`,
+          `Shadow: learning ${station} (${Math.round(best.skills[station] * 100)}%, needs ${Math.round(ctx.threshold * 100)}%), paired with a ${Math.round(mentor * 100)}% anchor.${fitReason(best.preference, shift) ? ` ${fitReason(best.preference, shift)}` : ""}`,
         );
       }
     }
@@ -349,6 +356,13 @@ export function generateSchedule(input: ScheduleInput): ScheduleResult {
 
   const hoursByEmployee: Record<string, number> = {};
   for (const e of employees) hoursByEmployee[e.id] = state.hoursOf(e.id);
+  let matched = 0;
+  let against = 0;
+  for (const a of assignments) {
+    const fit = preferenceFit(ctx.employeeById.get(a.employeeId)!.preference, state.shiftById.get(a.shiftId)!);
+    if (fit >= 0.5) matched++;
+    else if (fit <= -0.5) against++;
+  }
   const anchorsRequired = shifts.reduce((n, s) => n + STATIONS.reduce((m, st) => m + s.required[st], 0), 0);
 
   // Safety net: whatever we produce must pass the validator, apart from slots reported as unfilled.
@@ -366,6 +380,7 @@ export function generateSchedule(input: ScheduleInput): ScheduleResult {
       anchorsFilled: anchorsRequired - unfilled.length,
       shadows: assignments.filter((a) => a.role === "shadow").length,
       hoursByEmployee,
+      preferences: { matched, against },
     },
   };
 }
@@ -434,6 +449,8 @@ export function rankReplacements(
     if (hoursAfter / employee.hoursCap > SLACK_RATIO) reasons.push("Close to their weekly cap.");
     if (counts.shift + counts.day === 0 && specialty(employee, threshold)) reasons.push("Does not stack another specialist that day.");
     if (counts.shift > 0) reasons.push("Another specialist with the same skill is on this shift.");
+    const fitNote = fitReason(employee.preference, shift);
+    if (fitNote) reasons.push(fitNote);
     return { employeeId: employee.id, name: employee.name, score: Math.round(score * 100) / 100, hoursAfter, hoursCap: employee.hoursCap, reasons };
   });
   return result;
