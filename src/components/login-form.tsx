@@ -3,10 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { useLoginStage } from "@/components/login-stage";
+
 type Account = { id: string; name: string; role: "employee" | "manager"; isNew: boolean };
 
 export function LoginForm({ accounts }: { accounts: Account[] }) {
   const router = useRouter();
+  const stage = useLoginStage();
   const [employeeId, setEmployeeId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -15,18 +18,28 @@ export function LoginForm({ accounts }: { accounts: Account[] }) {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ employeeId }),
-    });
-    setBusy(false);
-    if (!response.ok) {
+    let user: Account;
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ employeeId }),
+      });
+      if (!response.ok) throw new Error("rejected");
+      user = ((await response.json()) as { user: Account }).user;
+    } catch {
+      setBusy(false);
       setError("Could not sign in. Try reseeding the demo data.");
       return;
     }
-    const { user } = (await response.json()) as { user: Account };
-    router.push(user.role === "manager" ? "/manager" : "/employee");
+    const href = user.role === "manager" ? "/manager" : "/employee";
+    // Stay "busy" while the toss-into-the-cauldron sequence plays, so the form cannot be submitted twice.
+    if (stage) {
+      await stage.play(href);
+      return;
+    }
+    setBusy(false);
+    router.push(href);
     router.refresh();
   }
 

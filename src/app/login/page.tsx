@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { BubbleBackground } from "@/components/bubble-background";
 import { LoginForm } from "@/components/login-form";
+import { LoginStage } from "@/components/login-stage";
 import { db } from "@/lib/db";
 import { employees } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
@@ -18,7 +19,7 @@ export default async function LoginPage() {
     .all();
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(to_bottom,#14101f_0%,#171428_55%,#0d2420_100%)]">
+    <LoginStage>
       <BubbleBackground />
       <main className="relative z-10 mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-7 p-8 text-center">
         <div className="flex flex-col items-center gap-3">
@@ -38,6 +39,6 @@ export default async function LoginPage() {
           )}
         </div>
       </main>
-    </div>
+    </LoginStage>
   );
 }

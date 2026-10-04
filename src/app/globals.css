@@ -149,8 +149,16 @@ body {
   --bob: 10px;
 }
 
+/* Hovering the button drops back to the gentle float: no extra sway while aiming at it. */
+.float-card:has(button:hover) {
+  --sway: 7px;
+  --tilt: 0.5deg;
+  --bob: 5px;
+}
+
 /* While someone is using the form, hold still so the dropdown and button are easy to hit. */
-.float-card:focus-within {
+.float-card:focus-within,
+.float-card:focus-within:has(button:hover) {
   --sway: 0px;
   --tilt: 0deg;
   --bob: 0px;
@@ -173,5 +181,106 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .float-card {
     animation: none;
+  }
+}
+
+/* ---- Toss into the cauldron: splash (see src/components/login-stage.tsx) ---- */
+
+.splash-layer {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.splash-drop {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.splash-blob {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #eafff3 0 10%, #4ade80 42%, #16a34a 100%);
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.75);
+  opacity: 0;
+}
+
+.splash-ring {
+  position: absolute;
+  left: -230px;
+  bottom: -16px;
+  width: 460px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 255, 170, 0.9);
+  box-shadow: 0 0 26px rgba(52, 255, 150, 0.7), inset 0 0 22px rgba(52, 255, 150, 0.45);
+  opacity: 0;
+}
+
+/* ---- Rising water page transition (see src/components/water-transition.tsx) ---- */
+
+.water-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.water-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: calc(100vh + 280px);
+  will-change: transform;
+}
+
+.water-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, #34d399 0%, #10b981 14%, #059669 42%, #047857 72%, #064e3b 100%);
+}
+
+/* Three wave layers in different shades, flowing at different speeds, so the surface looks alive. */
+.wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background-repeat: repeat-x;
+  background-size: 1200px 90px;
+}
+
+.wave-back {
+  top: -78px;
+  opacity: 0.55;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%236ee7b7'/%3E%3C/svg%3E");
+  animation: wave-flow 9s linear infinite;
+}
+
+.wave-mid {
+  top: -56px;
+  opacity: 0.8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%2310b981'/%3E%3C/svg%3E");
+  animation: wave-flow 6s linear infinite reverse;
+}
+
+.wave-front {
+  top: -34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%2334d399'/%3E%3C/svg%3E");
+  animation: wave-flow 4s linear infinite;
+}
+
+@keyframes wave-flow {
+  to {
+    background-position-x: 1200px;
   }
 }
