@@ -217,7 +217,8 @@ export function buildDemoSeed(): DemoSeed {
     for (const station of STATIONS) {
       const score = s.skills[station];
       if (score === undefined) continue;
-      const attemptCount = s.isNew ? 1 : 2;
+      // Certified stations have passed several different recipes (certification needs breadth); others have a try or two.
+      const attemptCount = score >= 0.8 ? 3 : s.isNew ? 1 : 2;
       mastery.push({
         id: `mastery-${s.id}-${station}`,
         employeeId: s.id,
@@ -229,7 +230,7 @@ export function buildDemoSeed(): DemoSeed {
       });
       const pool = recipes.filter((r) => r.station === station);
       for (let n = 0; n < attemptCount; n++) {
-        const attemptScore = clamp01(score + (n === 0 ? -0.04 : 0.04));
+        const attemptScore = clamp01(score >= 0.8 ? score + n * 0.02 : score + (n === 0 ? -0.04 : 0.04));
         attempts.push({
           id: `attempt-${s.id}-${station}-${n + 1}`,
           employeeId: s.id,
@@ -247,11 +248,11 @@ export function buildDemoSeed(): DemoSeed {
   const messages: DemoSeed["messages"] = [
     {
       id: "msg-finch-welcome", employeeId: "finch", kind: "welcome", read: false, createdAt: DEMO_NOW,
-      body: "Welcome to Conjuring Cauldron! Start with any chapter: Food, Drinks, or Customer Service. Reach 80% in one station and you will be added to the schedule.",
+      body: "Welcome to Conjuring Cauldron! Start with any chapter: Food, Drinks, or Customer Service. Certify one station and you will be added to the schedule: Food and Drinks need 3 different recipes at 80% or better, Customer Service needs one good call.",
     },
     {
       id: "msg-wren-welcome", employeeId: "wren", kind: "welcome", read: false, createdAt: DEMO_NOW,
-      body: "Nice start on Food, Wren! Keep practicing to reach 80%, or begin Drinks or Customer Service.",
+      body: "Nice start on Food, Wren! Keep practicing: pass 3 different Food recipes at 80% or better to certify, or begin Drinks or Customer Service.",
     },
   ];
 

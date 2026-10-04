@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { MasteryBar } from "@/components/mastery-bar";
+import { recipeCoverage } from "@/lib/mastery";
 import { requireEmployee } from "@/lib/require-user";
 import { getMastery, getRecipeProgress, isTrainingStation, listRecipes, STATION_LABELS } from "@/lib/training/data";
 
@@ -15,6 +16,7 @@ export default async function ChapterPage({ params }: { params: Promise<{ statio
   const recipes = listRecipes(station).sort((a, b) => a.difficulty - b.difficulty || a.name.localeCompare(b.name));
   const progress = getRecipeProgress(user.id, station);
   const mastery = getMastery(user.id)[station];
+  const coverage = recipeCoverage(user.id, station);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 p-8">
@@ -24,6 +26,9 @@ export default async function ChapterPage({ params }: { params: Promise<{ statio
         </Link>
         <h1 className="mb-4 mt-2 text-2xl font-bold">{STATION_LABELS[station]} chapter</h1>
         <MasteryBar score={mastery?.score ?? null} label="Chapter mastery" />
+        <p className="mt-2 text-sm text-violet-200">
+          To certify, pass {coverage.needed} different recipes at 80% or better: <strong>{Math.min(coverage.passed, coverage.needed)} of {coverage.needed}</strong> so far.
+        </p>
       </header>
 
       <ul className="grid gap-3">

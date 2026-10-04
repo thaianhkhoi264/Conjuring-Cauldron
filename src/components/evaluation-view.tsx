@@ -75,7 +75,7 @@ export function EvaluationView({ evaluation, employeeId }: { evaluation: Evaluat
         <List
           title="Can start now"
           items={evaluation.canStartNow.map((c) => c.text)}
-          empty="Reaching 80% in one chapter unlocks working that station."
+          empty="Certifying a chapter unlocks working that station (Food and Drinks need 3 different recipes at 80%)."
         />
         <List title="Next steps" items={evaluation.nextSteps} empty="You are all caught up." />
       </div>

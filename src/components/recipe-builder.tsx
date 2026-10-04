@@ -34,7 +34,7 @@ type Result = {
   mistakes: string[];
   coaching: string;
   judgedBy: "gemini" | "fallback";
-  mastery: { score: number; certified: boolean };
+  mastery: { score: number; certified: boolean; coverage?: { passed: number; needed: number } };
 };
 
 function Chip({ item, disabled, onPick }: { item: string; disabled: boolean; onPick: (item: string) => void }) {
@@ -412,6 +412,12 @@ export function RecipeBuilder({ recipe, options, backHref, nextHref }: RecipeBui
           )}
           <div className="mt-5">
             <MasteryBar score={result.mastery.score} label={`${recipe.station === "drink" ? "Drinks" : "Food"} mastery`} />
+            {!result.mastery.certified && result.mastery.coverage && result.mastery.coverage.passed < result.mastery.coverage.needed && (
+              <p className="mt-2 text-sm text-amber-200">
+                To certify on this station you need {result.mastery.coverage.needed} different recipes at 80% or better. You have passed{" "}
+                {result.mastery.coverage.passed} so far, so keep going with another recipe.
+              </p>
+            )}
             {result.mastery.certified && (
               <p className="mt-2 text-sm text-amber-200">✦ Certified! You can now be scheduled on this station.</p>
             )}
