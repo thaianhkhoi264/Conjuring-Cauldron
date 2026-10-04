@@ -37,7 +37,7 @@ export function LoginForm({ accounts }: { accounts: Account[] }) {
         <select
           value={employeeId}
           onChange={(event) => setEmployeeId(event.target.value)}
-          className="rounded border border-violet-400/40 bg-violet-950/40 p-2 text-base"
+          className="rounded-lg border border-violet-300/30 bg-violet-950/60 p-2.5 text-base [color-scheme:dark] outline-none focus:border-emerald-300/70 focus:ring-2 focus:ring-emerald-400/30"
         >
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
@@ -50,7 +50,7 @@ export function LoginForm({ accounts }: { accounts: Account[] }) {
       <button
         type="submit"
         disabled={busy || !employeeId}
-        className="rounded bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-50"
+        className="rounded-lg bg-gradient-to-r from-emerald-400 to-emerald-500 px-4 py-2.5 font-semibold text-emerald-950 shadow-[0_0_24px_-4px_rgba(52,211,153,0.6)] transition hover:from-emerald-300 hover:to-emerald-400 disabled:opacity-50"
       >
         {busy ? "Signing in..." : "Enter the cauldron"}
       </button>
