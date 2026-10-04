@@ -53,6 +53,7 @@ Never commit this file or paste keys into chat, issues or PRs.
 | `npm run db:push` | apply schema changes to the local database |
 | `npm run db:generate` | generate a migration after editing `src/lib/db/schema.ts` |
 | `npm run verify:training`, `verify:scheduler`, `verify:calloffs`, `verify:clock` | feature checks on pure logic or a throwaway database; safe to run any time |
+| `npm run verify:evaluation` | checks the evaluation report logic on synthetic cases and the seed data |
 | `npm run verify:agent-tools` | checks the schedule assistant's tools and the Apply step without calling Gemini |
 | `npm run verify:agent-live` | runs the schedule assistant against real Gemini on a throwaway database (needs a working key) |
 | `npm run verify:llm` | checks your Gemini setup end to end (lists available models if the model ids are not set yet) |

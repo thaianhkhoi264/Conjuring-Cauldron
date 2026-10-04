@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { SkillMatrixRow } from "@/lib/scheduling/store";
 
 const STATIONS = [
@@ -38,7 +40,9 @@ export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
           {rows.map((row) => (
             <tr key={row.id}>
               <th scope="row" className="border border-violet-900 p-2 font-medium">
-                {row.name}
+                <Link href={`/manager/evaluation/${row.id}`} className="underline decoration-violet-400/60 underline-offset-2 hover:text-violet-200">
+                  {row.name}
+                </Link>
                 {row.isNew && <span className="ml-2 rounded bg-violet-800 px-1.5 py-0.5 text-xs">new</span>}
               </th>
               {STATIONS.map((s) => {

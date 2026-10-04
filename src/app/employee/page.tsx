@@ -53,6 +53,9 @@ export default async function EmployeeHome() {
               ? "Welcome! Reach 80% in any chapter to be added to the schedule."
               : "Keep training to stay certified."}
         </p>
+        <Link href="/employee/evaluation" className="mr-3 mt-4 inline-block rounded border border-violet-400/60 px-4 py-2">
+          View my full evaluation
+        </Link>
         <Link href="/employee/training" className="mt-4 inline-block rounded bg-violet-500 px-4 py-2 font-semibold text-white">
           {user.isNew && certified.length === 0 ? "Start training" : "Go to training"}
         </Link>
