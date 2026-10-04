@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { TranscriptTurn } from "@/lib/db/types";
 import { mergeTranscript, vapiMessageToTurn } from "./transcript";
+import { describeVapiError } from "./vapi-errors";
 import type { VapiSessionConfig } from "./vapi";
 
 type StartResponse = {
@@ -61,7 +62,8 @@ export function useVapiCall() {
         if (turn) setTranscript((current) => mergeTranscript(current, [turn]));
       });
       voiceClient.on("error", (nextError) => {
-        setError(nextError instanceof Error ? nextError.message : "The voice call failed.");
+        console.error("Vapi call error:", nextError);
+        setError(describeVapiError(nextError));
         setStatus("error");
       });
       await voiceClient.start(nextSession.vapi.assistantId, nextSession.vapi.assistantOverrides);
