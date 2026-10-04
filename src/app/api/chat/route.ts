@@ -2,17 +2,22 @@ import { NextResponse } from "next/server";
 
 import { createEmployeeChatTools, employeeChatSystemPrompt } from "@/lib/chatbot";
 import { runAgent } from "@/lib/llm";
+import { forbidden, getSessionUser, unauthorized } from "@/lib/session";
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { employeeId?: string; message?: string; confirmCalloff?: boolean };
-  if (!body.employeeId || !body.message?.trim()) {
-    return NextResponse.json({ error: "An employee and message are required." }, { status: 400 });
+  const user = getSessionUser(request);
+  if (!user) return unauthorized();
+  if (user.role !== "employee") return forbidden();
+
+  const body = (await request.json().catch(() => ({}))) as { message?: string; confirmCalloff?: boolean };
+  if (!body.message?.trim()) {
+    return NextResponse.json({ error: "A message is required." }, { status: 400 });
   }
   try {
     const result = await runAgent({
       prompt: body.message,
-      system: employeeChatSystemPrompt(body.employeeId),
-      tools: createEmployeeChatTools(body.employeeId, body.confirmCalloff === true),
+      system: employeeChatSystemPrompt(user.id),
+      tools: createEmployeeChatTools(user.id, body.confirmCalloff === true),
     });
     const confirmation = result.toolCalls.find((call) => {
       const output = call.result as { requiresConfirmation?: boolean };

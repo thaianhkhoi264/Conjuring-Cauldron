@@ -5,10 +5,8 @@ import { useEffect, useState } from "react";
 import type { TranscriptTurn } from "@/lib/db/types";
 import { getVoiceScenario } from "./scenarios";
 
-export const fallbackCallScenarioId = "wrong-order";
-
-export function getFallbackCallTranscript(): TranscriptTurn[] {
-  const scenario = getVoiceScenario(fallbackCallScenarioId);
+export function getFallbackCallTranscript(scenarioId: string): TranscriptTurn[] {
+  const scenario = getVoiceScenario(scenarioId);
   if (!scenario) throw new Error("Fallback voice scenario is missing.");
   return scenario.fallbackTranscript;
 }
@@ -18,8 +16,10 @@ export function getFallbackCallTranscript(): TranscriptTurn[] {
  * shares the same transcript shape as the Vapi flow, so it can be evaluated by
  * the exact same Customer Service rubric.
  */
-export function FallbackCallPlayer({ onComplete }: { onComplete?: (transcript: TranscriptTurn[]) => void }) {
-  const transcript = getFallbackCallTranscript();
+export function FallbackCallPlayer({ scenarioId, onComplete }: { scenarioId: string; onComplete?: (transcript: TranscriptTurn[]) => void }) {
+  const scenario = getVoiceScenario(scenarioId);
+  if (!scenario) throw new Error("Fallback voice scenario is missing.");
+  const transcript = scenario.fallbackTranscript;
   const [visibleTurns, setVisibleTurns] = useState<TranscriptTurn[]>([]);
   const [playing, setPlaying] = useState(false);
 
@@ -43,12 +43,12 @@ export function FallbackCallPlayer({ onComplete }: { onComplete?: (transcript: T
 
   return (
     <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5" aria-label="Voice-call demo fallback">
-      <p className="text-sm font-semibold uppercase tracking-wide text-amber-800">Demo fallback · Cold Dragon&apos;s Breath Cider</p>
+      <p className="text-sm font-semibold uppercase tracking-wide text-amber-800">Demo fallback · {scenario.title}</p>
       <p className="mt-1 text-sm text-amber-950">Use this replay if the live microphone or Vapi call is unavailable. Its transcript follows the normal scoring path.</p>
       <div className="mt-4 space-y-2" aria-live="polite">
         {visibleTurns.map((turn, index) => (
           <p key={`${turn.speaker}-${index}`} className="rounded-lg bg-white px-3 py-2 text-sm text-slate-800">
-            <span className="font-semibold">{turn.speaker === "customer" ? "Mirella" : "Employee"}:</span> {turn.text}
+            <span className="font-semibold">{turn.speaker === "customer" ? scenario.customerName : "Employee"}:</span> {turn.text}
           </p>
         ))}
       </div>

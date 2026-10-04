@@ -1,9 +1,10 @@
-import { and, eq } from "drizzle-orm";
-import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 
 import type { AgentTool } from "@/lib/llm";
+import { createCalloff } from "@/lib/calloffs";
 import { db } from "@/lib/db";
-import { assignments, calloffs, employees, recipes, shifts } from "@/lib/db/schema";
+import { assignments, employees, recipes, shifts } from "@/lib/db/schema";
+import { currentWindow } from "@/lib/scheduling/store";
 
 export type EmployeeScheduleItem = {
   assignmentId: string;
@@ -15,6 +16,7 @@ export type EmployeeScheduleItem = {
 };
 
 export function getEmployeeSchedule(employeeId: string): EmployeeScheduleItem[] {
+  const window = currentWindow();
   return db.select({
     assignmentId: assignments.id,
     date: shifts.date,
@@ -27,7 +29,8 @@ export function getEmployeeSchedule(employeeId: string): EmployeeScheduleItem[] 
     .innerJoin(shifts, eq(assignments.shiftId, shifts.id))
     .where(eq(assignments.employeeId, employeeId))
     .orderBy(shifts.date)
-    .all();
+    .all()
+    .filter((item) => item.date >= window.from && item.date <= window.to);
 }
 
 function getRecipeBook() {
@@ -46,14 +49,9 @@ export function requestCalloff(employeeId: string, assignmentId: string, reason:
     };
   }
 
-  const existing = db.select().from(calloffs).where(eq(calloffs.assignmentId, assignmentId)).get();
-  if (existing) return { error: "A call-off is already open for that shift." };
-
-  db.transaction((tx) => {
-    tx.update(assignments).set({ status: "called_off" }).where(eq(assignments.id, assignmentId)).run();
-    tx.insert(calloffs).values({ id: randomUUID(), assignmentId, reason: reason || "No reason provided" }).run();
-  });
-  return { created: true, assignment: scheduled };
+  const result = createCalloff(employeeId, assignmentId, reason);
+  if (!result.ok) return { error: result.error };
+  return { created: true, assignment: scheduled, calloffId: result.calloffId, needsCover: result.needsCover };
 }
 
 export function createEmployeeChatTools(employeeId: string, confirmedCalloff: boolean): AgentTool[] {
