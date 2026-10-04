@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useRef, useState } from "react";
+import { Thinking } from "@/components/ui";
 
 type ChatMessage = { role: "employee" | "assistant"; text: string };
 type Pending = { assignmentId: string; message: string };
@@ -21,6 +22,7 @@ export function EmployeeChatbot() {
     setLoading(true);
     setPending(null);
     setMessages((current) => [...current, { role: "employee", text: message }]);
+    setTimeout(() => endRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 50);
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -35,7 +37,7 @@ export function EmployeeChatbot() {
       setMessages((current) => [...current, { role: "assistant", text: "I could not reach the assistant. Please check your connection and try again." }]);
     } finally {
       setLoading(false);
-      setTimeout(() => endRef.current?.scrollIntoView({ block: "nearest" }), 50);
+      setTimeout(() => endRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 50);
     }
   }
 
@@ -54,7 +56,7 @@ export function EmployeeChatbot() {
       </h2>
       <p className="mt-1 text-sm text-violet-200">Ask about a recipe, your own shifts, or request a call-off.</p>
 
-      <div className="mt-4 flex max-h-96 flex-col gap-2 overflow-y-auto" aria-live="polite">
+      <div className="chat-scroll mt-4 flex max-h-96 flex-col gap-2 overflow-y-auto" aria-live="polite">
         {messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map((suggestion) => (
@@ -73,14 +75,14 @@ export function EmployeeChatbot() {
         {messages.map((message, index) => (
           <p
             key={index}
-            className={`max-w-prose whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
+            className={`msg-in max-w-prose whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
               message.role === "employee" ? "self-end bg-emerald-700 text-white" : "self-start bg-violet-900/60"
             }`}
           >
             {message.text}
           </p>
         ))}
-        {loading && <p className="text-sm text-violet-300">Thinking...</p>}
+        {loading && <Thinking />}
         <div ref={endRef} />
       </div>
 

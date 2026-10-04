@@ -15,6 +15,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { MasteryBar } from "@/components/mastery-bar";
 import { ingredientIcon } from "@/lib/training/icons";
+import { Spinner } from "@/components/ui";
 
 type Ingredient = { item: string; quantity?: string };
 type BuildEvent = { type: "add" | "remove"; item: string; atMs: number };
@@ -386,7 +387,7 @@ export function RecipeBuilder({ recipe, options, backHref, nextHref }: RecipeBui
                 disabled={submitting || placed.length === 0}
                 className="serve-button mt-4 rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-5 py-2.5 font-semibold text-emerald-950 disabled:opacity-50"
               >
-                {submitting ? "Judging..." : `Serve the ${stationLabel}`}
+                {submitting ? (<><Spinner />Judging...</>) : `Serve the ${stationLabel}`}
               </button>
             </section>
           </div>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="100%" r="70%">
+      <stop offset="0" stop-color="#34ff96" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#34ff96" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#41376d"/>
+      <stop offset="1" stop-color="#1c1636"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#14101f"/>
+  <ellipse cx="32" cy="58" rx="30" ry="22" fill="url(#glow)"/>
+  <circle cx="22" cy="19" r="4" fill="#4ade80" opacity="0.9"/>
+  <circle cx="35" cy="12" r="3" fill="#86efac" opacity="0.9"/>
+  <circle cx="44" cy="22" r="2.5" fill="#4ade80" opacity="0.8"/>
+  <path d="M12 30h40c1 0 1.500 1 1.200 2C51 46 44 54 32 54S13 46 10.800 32C10.500 31 11 30 12 30z" fill="url(#pot)" stroke="#6ee7b7" stroke-width="2"/>
+  <ellipse cx="32" cy="30" rx="21" ry="4.500" fill="#34d399"/>
+  <ellipse cx="32" cy="29.500" rx="16" ry="2.500" fill="#a7f3d0" opacity="0.7"/>
+</svg>

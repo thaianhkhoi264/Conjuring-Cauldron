@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Thinking, SkeletonLines } from "@/components/ui";
 
 type Narrative = { summary: string; tips: string[]; source: "gemini" | "fallback" };
 
@@ -38,7 +39,10 @@ export function EvaluationNarrative({ employeeId }: { employeeId?: string }) {
         Trainer&apos;s summary
       </h2>
       {!narrative ? (
-        <p className="text-sm text-violet-300">Writing the summary...</p>
+        <div className="space-y-3">
+          <Thinking label="Writing the summary" />
+          <SkeletonLines lines={3} />
+        </div>
       ) : (
         <>
           <p>{narrative.summary}</p>

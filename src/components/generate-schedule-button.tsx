@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Spinner } from "@/components/ui";
 
 type Summary = {
   stats: { anchorsRequired: number; anchorsFilled: number; shadows: number };
@@ -40,7 +41,7 @@ export function GenerateScheduleButton({ hasSchedule }: { hasSchedule: boolean }
           disabled={busy}
           className="rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110 disabled:opacity-50"
         >
-          {busy ? "Scheduling..." : hasSchedule ? "Regenerate schedule" : "Generate schedule"}
+          {busy ? (<><Spinner />Scheduling...</>) : hasSchedule ? "Regenerate schedule" : "Generate schedule"}
         </button>
       </div>
       {error && (

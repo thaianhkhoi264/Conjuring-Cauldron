@@ -18,8 +18,8 @@ function skillClass(score: number | null) {
 /** Heat map of mastery per employee and station. Text values are shown, not just colour. */
 export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+    <div className="table-wrap overflow-x-auto">
+      <table className="data-table w-full min-w-[32rem] text-left text-sm">
         <caption className="sr-only">Team skills by station</caption>
         <thead>
           <tr>

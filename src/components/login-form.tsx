@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useLoginStage } from "@/components/login-stage";
+import { Spinner } from "@/components/ui";
 
 type Account = { id: string; name: string; role: "employee" | "manager"; isNew: boolean };
 
@@ -65,7 +66,7 @@ export function LoginForm({ accounts }: { accounts: Account[] }) {
         disabled={busy || !employeeId}
         className="rounded-lg bg-gradient-to-r from-emerald-400 to-emerald-500 px-4 py-2.5 font-semibold text-emerald-950 shadow-[0_0_24px_-4px_rgba(52,211,153,0.6)] transition hover:from-emerald-300 hover:to-emerald-400 disabled:opacity-50"
       >
-        {busy ? "Signing in..." : "Enter the cauldron"}
+        {busy ? (<><Spinner />Signing in...</>) : "Enter the cauldron"}
       </button>
     </form>
   );

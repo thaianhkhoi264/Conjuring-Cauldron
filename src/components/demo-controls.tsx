@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Spinner } from "@/components/ui";
 
 type Summary = {
   from: string;
@@ -74,7 +75,7 @@ export function DemoControls({ demoDate }: { demoDate: string }) {
             onClick={() => run("skip")}
             className="rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110 disabled:opacity-50"
           >
-            {busy === "skip" ? "Skipping..." : "Skip ahead 3 days"}
+            {busy === "skip" ? (<><Spinner />Skipping...</>) : "Skip ahead 3 days"}
           </button>
           <button
             type="button"
@@ -82,7 +83,7 @@ export function DemoControls({ demoDate }: { demoDate: string }) {
             onClick={() => run("reset")}
             className="rounded border border-violet-400/60 px-4 py-2 disabled:opacity-50"
           >
-            {busy === "reset" ? "Resetting..." : "Reset demo"}
+            {busy === "reset" ? (<><Spinner />Resetting...</>) : "Reset demo"}
           </button>
         </div>
       </div>
