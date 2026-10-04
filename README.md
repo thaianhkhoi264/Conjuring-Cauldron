@@ -50,7 +50,9 @@ Never commit this file or paste keys into chat, issues or PRs.
 | `npm run db:seed` | reset all demo data to the seeded state |
 | `npm run db:push` | apply schema changes to the local database |
 | `npm run db:generate` | generate a migration after editing `src/lib/db/schema.ts` |
-| `npm run verify:voice`, `verify:chatbot` | feature checks (see the warning below) |
+| `npm run verify:training`, `verify:scheduler`, `verify:calloffs`, `verify:clock` | feature checks on pure logic or a throwaway database; safe to run any time |
+| `npm run verify:llm` | checks your Gemini setup end to end (lists available models if the model ids are not set yet) |
+| `npm run verify:voice`, `verify:chatbot` | Agent A's feature checks |
 
 > **Warning:** the `verify:*` scripts on `main` may delete data from your local database. Run them with `DATABASE_URL` pointed at a throwaway file until the voice fixes in PLAN.md section 13 are merged.
 
