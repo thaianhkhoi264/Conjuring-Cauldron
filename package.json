@@ -19,6 +19,7 @@
     "verify:calloffs": "tsx scripts/verify-calloffs.ts",
     "verify:clock": "tsx scripts/verify-demo-clock.ts",
     "verify:evaluation": "tsx scripts/verify-evaluation.ts",
+    "verify:chat-safety": "tsx scripts/verify-chat-safety.ts",
     "verify:llm": "tsx scripts/verify-llm.ts",
     "verify:agent-tools": "tsx scripts/verify-agent-tools.ts",
     "verify:agent-live": "tsx scripts/verify-agent-live.ts"

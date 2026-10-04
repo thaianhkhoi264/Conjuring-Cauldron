@@ -178,3 +178,52 @@ export async function listGenerativeModels(): Promise<string[]> {
   }
   return names.sort();
 }
+
+/** Thrown by `runAgentResilient` when no configured model could answer in time. */
+export class LlmUnavailableError extends Error {
+  constructor(readonly kind: "rate-limit" | "unavailable", detail: string) {
+    super(detail);
+    this.name = "LlmUnavailableError";
+  }
+}
+
+function isTransientLlmError(error: unknown) {
+  const text = error instanceof Error ? error.message : String(error);
+  return /"code":\s*(429|500|502|503|504)|high demand|UNAVAILABLE|RESOURCE_EXHAUSTED|fetch failed|timed out/i.test(text);
+}
+
+/**
+ * `runAgent` with a time limit per attempt and a second try on the other configured model.
+ * Throws `LlmUnavailableError` (never a raw API error) when the models are busy, slow or over quota.
+ * Errors that look like bugs are rethrown unchanged.
+ */
+export async function runAgentResilient(options: Omit<RunAgentOptions, "tier"> & { timeoutMs?: number }): Promise<AgentResult> {
+  const { timeoutMs = 30_000, ...rest } = options;
+  const tiers = ["fast", "pro"] as const;
+  let last: unknown;
+
+  for (const tier of tiers) {
+    try {
+      return await new Promise<AgentResult>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out waiting for the model.")), timeoutMs);
+        runAgent({ ...rest, tier }).then(
+          (value) => {
+            clearTimeout(timer);
+            resolve(value);
+          },
+          (error) => {
+            clearTimeout(timer);
+            reject(error);
+          },
+        );
+      });
+    } catch (error) {
+      last = error;
+      if (!isTransientLlmError(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+  }
+
+  const detail = last instanceof Error ? last.message : String(last);
+  throw new LlmUnavailableError(/"code":\s*429|RESOURCE_EXHAUSTED|quota/i.test(detail) ? "rate-limit" : "unavailable", detail.slice(0, 300));
+}
