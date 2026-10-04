@@ -19,6 +19,8 @@ The customer service part is shown as a **short live snippet** of a voice call w
 
 ## Live call: set up, then check every time
 
+After any restart, follow [RUNBOOK.md](RUNBOOK.md) first (app, tunnel, then Vapi's server URL).
+
 **Status:** the Vapi assistant, the tunnel and the settings exist, and a live call has been run on the development laptop: it connects, the witch speaks in her custom voice, and the call works inside the app (reported by the team on 2026-10-04). **Not yet confirmed:** grading of a live transcript end to end, and the real 30-second timing. The go/no-go check below covers both; do it on the laptop and network you will present on.
 
 **What has to be true (details to recreate everything are in the appendix at the bottom):**
