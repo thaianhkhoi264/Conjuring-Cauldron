@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import { createScratchDatabase } from "./scratch-db";
 import { toSpeaker, vapiMessageToTurn } from "../src/voice/transcript";
+import { describeVapiError } from "../src/voice/vapi-errors";
 
 // Who is speaking: in our calls the AI is the witch CUSTOMER (Vapi "assistant") and the trainee is Vapi's "user".
 assert.equal(toSpeaker("user"), "employee", "the trainee on the microphone is the employee");
@@ -19,6 +20,27 @@ assert.deepEqual(vapiMessageToTurn({ type: "transcript", transcriptType: "final"
 assert.equal(vapiMessageToTurn({ type: "transcript", transcriptType: "partial", role: "user", transcript: "I am so" }), undefined, "partial transcripts are skipped");
 assert.equal(vapiMessageToTurn({ type: "conversation-update", role: "user", transcript: "x" }), undefined, "other message types are skipped");
 assert.equal(vapiMessageToTurn({ type: "transcript", transcriptType: "final", role: "user", transcript: "   " }), undefined, "empty text is skipped");
+
+// Error text: the real reason shows, with a hint for the common causes.
+{
+  const ejected = describeVapiError({ type: "daily-error", error: { errorMsg: "Meeting has ended due to ejection", message: "ejected" } });
+  assert.match(ejected, /Meeting has ended due to ejection/);
+  assert.match(ejected, /\(daily-error\)/);
+  assert.match(ejected, /model and voice/, "an ejection explains where to look");
+
+  const mic = describeVapiError({ type: "start-method-error", stage: "unknown", error: { message: "Permission denied" } });
+  assert.match(mic, /Permission denied/);
+  assert.match(mic, /Allow the microphone/);
+
+  assert.match(describeVapiError({ type: "daily-error", error: { message: "No microphone found: NotFoundError" } }), /No microphone was found/);
+  assert.match(describeVapiError({ error: "websocket connection timed out" }), /VPN/);
+  assert.match(describeVapiError("plain text failure"), /plain text failure/);
+  assert.match(describeVapiError(new Error("boom")), /boom/);
+  assert.match(describeVapiError({ type: "daily-error" }), /\(daily-error\).*console/, "no message still names the type");
+  assert.match(describeVapiError(undefined), /browser console/);
+  assert.match(describeVapiError({ type: "x", error: { errorMsg: "Something odd" } }), /Something odd/);
+  assert.ok(!/undefined|\[object/.test(describeVapiError({ error: {} })), "never prints undefined or [object Object]");
+}
 
 async function main() {
   await createScratchDatabase("voice-mapping");
