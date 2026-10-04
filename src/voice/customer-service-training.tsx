@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import type { CustomerServiceRubric } from "@/lib/db/types";
@@ -95,7 +96,10 @@ export function CustomerServiceTraining({ initialScore }: { initialScore: number
         <>
           {evaluation.judgedBy === "fallback" && <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Gemini was unavailable, so this feedback used the deterministic demo rubric.</p>}
           <CustomerServiceFeedbackCard rubric={evaluation.rubric} />
-          <button type="button" onClick={begin} className="rounded-lg border border-violet-300 px-4 py-2 text-sm font-semibold text-violet-100">Try another scenario</button>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/employee/evaluation" className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-black">View my evaluation</Link>
+            <button type="button" onClick={begin} className="rounded-lg border border-violet-300 px-4 py-2 text-sm font-semibold text-violet-100">Try another scenario</button>
+          </div>
         </>
       )}
     </div>

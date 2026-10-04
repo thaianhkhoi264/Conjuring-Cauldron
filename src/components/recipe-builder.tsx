@@ -261,11 +261,14 @@ export function RecipeBuilder({ recipe, options, backHref, nextHref }: RecipeBui
             )}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/employee/evaluation" className="rounded bg-emerald-500 px-4 py-2 font-semibold text-black">
+              View my evaluation
+            </Link>
             <button type="button" onClick={() => setPhase("study")} className="rounded border border-violet-400/50 px-4 py-2">
               Try again
             </button>
             {nextHref && (
-              <Link href={nextHref} className="rounded bg-violet-500 px-4 py-2 font-semibold text-white">
+              <Link href={nextHref} className="rounded border border-violet-400/50 px-4 py-2">
                 Next recipe
               </Link>
             )}
