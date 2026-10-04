@@ -86,7 +86,7 @@ export function CustomerServiceTraining({ initialScore }: { initialScore: number
       </section>
 
       {status === "demo" && session && !evaluation && (
-        <FallbackCallPlayer onComplete={() => void evaluate(true)} />
+        <FallbackCallPlayer scenarioId={session.scenario.id} onComplete={() => void evaluate(true)} />
       )}
 
       {(error || pageError) && <p role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-900">{pageError ?? error}</p>}
