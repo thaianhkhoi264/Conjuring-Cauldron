@@ -380,11 +380,13 @@ main {
   animation: page-in 0.55s ease-out both;
 }
 
-/* Cards glow a little when pointed at. Colour only, so nothing shifts under the pointer. */
-main section {
+/* Cards glow a little when pointed at. Colour only, so nothing shifts under the pointer.
+   Only real cards: sections that have a border and no other section inside, so page-wide layout
+   sections (the manager dashboard) never light up. */
+main section[class~="border"]:not(:has(section)) {
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
-main section:hover {
+main section[class~="border"]:not(:has(section)):hover {
   border-color: rgba(110, 231, 183, 0.5);
   box-shadow: 0 0 26px -10px rgba(52, 211, 153, 0.5);
 }
@@ -418,7 +420,7 @@ main > header h1 {
 .pot {
   position: relative;
   min-height: 13rem;
-  padding: 1rem;
+  padding: 1rem 1.25rem 2.25rem;
   border: 2px dashed rgba(167, 139, 250, 0.5);
   background: rgba(46, 16, 101, 0.4);
   overflow: hidden;
@@ -426,7 +428,8 @@ main > header h1 {
 }
 /* A cauldron for drinks: wide rim on top, round belly below. A round plate for food. */
 .pot-cauldron {
-  border-radius: 1.25rem 1.25rem 45% 45% / 1.25rem 1.25rem 38% 38%;
+  /* Round belly with fixed corner sizes, and extra padding below, so a long list never meets the curve. */
+  border-radius: 1.25rem 1.25rem 2.75rem 2.75rem;
   border-top: 8px solid rgba(110, 231, 183, 0.45);
 }
 .pot-plate {
