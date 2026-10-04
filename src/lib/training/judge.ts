@@ -10,6 +10,14 @@ import {
   type BuildFacts,
 } from "./scoring";
 
+/** Hard limit on how long a trainee can wait for the AI judge before the computed score is used. */
+export const JUDGE_DEADLINE_MS = 8000;
+const MIN_RETRY_MS = 2500;
+/** A healthy call takes about 1 s with minimal thinking, so a hung first attempt is cut early and retried. */
+const FIRST_ATTEMPT_MS = 4500;
+
+type JsonGenerate = <T>(schema: object, prompt: string, options?: { timeoutMs?: number; thinking?: "minimal" | "low" }) => Promise<T>;
+
 export type JudgeInput = {
   recipeName: string;
   station: "food" | "drink";
@@ -77,7 +85,11 @@ function cleanText(value: unknown, max: number) {
  * failure (no key, rate limit, bad output) falls back to the deterministic score
  * so training never blocks.
  */
-export async function judgeAttempt(input: JudgeInput): Promise<JudgeResult> {
+export async function judgeAttempt(
+  input: JudgeInput,
+  generate: JsonGenerate = generateJsonFromSchema,
+  deadlineMs: number = JUDGE_DEADLINE_MS,
+): Promise<JudgeResult> {
   const base = deterministicScores(input.facts);
   const fallback: JudgeResult = {
     ...base,
@@ -90,7 +102,29 @@ export async function judgeAttempt(input: JudgeInput): Promise<JudgeResult> {
   if (input.facts.actual.length === 0) return fallback;
 
   try {
-    const raw = await generateJsonFromSchema<Partial<LlmJudge>>(judgeSchema, buildJudgePrompt(input));
+    const prompt = buildJudgePrompt(input);
+    const started = Date.now();
+    // One attempt within the deadline; if it fails fast (a network blip) and time remains, try once more.
+    const firstMs = Math.min(FIRST_ATTEMPT_MS, Math.floor(deadlineMs * 0.55));
+    const attempt = generate<Partial<LlmJudge>>(judgeSchema, prompt, { timeoutMs: firstMs, thinking: "minimal" }).catch((first) => {
+      const remaining = deadlineMs - (Date.now() - started);
+      if (remaining < MIN_RETRY_MS) throw first;
+      return generate<Partial<LlmJudge>>(judgeSchema, prompt, { timeoutMs: remaining, thinking: "minimal" });
+    });
+    // Whatever the network does, the trainee never waits longer than the deadline.
+    const raw = await new Promise<Partial<LlmJudge>>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Judge deadline reached.")), deadlineMs);
+      attempt.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (error) => {
+          clearTimeout(timer);
+          reject(error);
+        },
+      );
+    });
     if (typeof raw.accuracy !== "number" || typeof raw.speed !== "number") throw new Error("Judge returned no scores.");
     const accuracy = clampToBand(raw.accuracy, base.accuracy);
     const speed = clampToBand(raw.speed, base.speed);

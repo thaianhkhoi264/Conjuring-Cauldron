@@ -199,7 +199,7 @@ export function buildDemoSeed(): DemoSeed {
         station,
         score,
         attempts: attemptCount,
-        lastTrainedAt: isoDaysAgo(1 + (index % 3)),
+        lastTrainedAt: isoDaysAgo(1 + (index % 2)), // 1 to 2 days: nobody is due a retest until Skip Ahead
       });
       const pool = recipes.filter((r) => r.station === station);
       for (let n = 0; n < attemptCount; n++) {

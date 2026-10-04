@@ -38,20 +38,36 @@ type Result = {
 function Chip({ item, disabled, onPick }: { item: string; disabled: boolean; onPick: (item: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: item, disabled });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  const pressedAt = useRef<{ x: number; y: number } | null>(null);
+
+  // The drag library swallows the first `click` after any drag, so a click straight after dragging an
+  // item did nothing. Pointer events are not suppressed: a press and release that barely moves is a click.
+  // `click` is kept only for keyboard activation (detail 0), so nothing is added twice.
   return (
     <button
       ref={setNodeRef}
       type="button"
       style={style}
       disabled={disabled}
-      onClick={() => onPick(item)}
+      {...attributes}
+      {...listeners}
+      onPointerDown={(event) => {
+        pressedAt.current = { x: event.clientX, y: event.clientY };
+        listeners?.onPointerDown?.(event);
+      }}
+      onPointerUp={(event) => {
+        const start = pressedAt.current;
+        pressedAt.current = null;
+        if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) < 6) onPick(item);
+      }}
+      onClick={(event) => {
+        if (event.detail === 0) onPick(item);
+      }}
       className={`touch-none rounded-full border px-3 py-1.5 text-sm ${
         disabled
           ? "border-violet-900 bg-violet-950/40 text-violet-400/50"
           : "cursor-grab border-violet-400/60 bg-violet-900/60 hover:bg-violet-800"
       } ${isDragging ? "z-10 opacity-80 shadow-lg" : ""}`}
-      {...listeners}
-      {...attributes}
     >
       {item}
     </button>

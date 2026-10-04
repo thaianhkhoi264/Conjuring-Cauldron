@@ -6,7 +6,7 @@ AI that trains, evaluates and schedules employees for food service locations. Th
 - **Evaluate:** per-station mastery scores; a station is certified at 0.8 or higher.
 - **Schedule:** shifts are staffed from certified skills, call-offs are re-routed to the best replacement.
 
-The full design, ownership rules and progress log are in [PLAN.md](PLAN.md). Read sections 12 to 14 before you start work.
+The full design, ownership rules and progress log are in [PLAN.md](PLAN.md). To present it, use [DEMO.md](DEMO.md) (3-minute run-of-show). Read sections 12 to 14 before you start work.
 
 ## Setup
 
