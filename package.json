@@ -16,7 +16,8 @@
     "verify:chatbot": "tsx scripts/verify-chatbot.ts",
     "verify:training": "tsx scripts/verify-training.ts",
     "verify:scheduler": "tsx scripts/verify-scheduler.ts",
-    "verify:calloffs": "tsx scripts/verify-calloffs.ts"
+    "verify:calloffs": "tsx scripts/verify-calloffs.ts",
+    "verify:clock": "tsx scripts/verify-demo-clock.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
