@@ -49,11 +49,19 @@ export default async function TrainingHub() {
           </Link>
         ))}
 
-        <div className="rounded-lg border border-violet-400/20 bg-violet-950/20 p-5 opacity-80">
-          <h2 className="text-lg font-semibold">{STATION_LABELS.cs}</h2>
-          <p className="mb-4 mt-1 text-sm text-violet-200">Practise a live call with a witch customer. Coming soon to this page.</p>
+        <Link
+          href="/employee/training/customer-service"
+          className="rounded-lg border border-violet-400/40 bg-violet-950/40 p-5 hover:bg-violet-900/40"
+        >
+          <h2 className="text-lg font-semibold">
+            {STATION_LABELS.cs}
+            {retestStations.has("cs") && (
+              <span className="ml-2 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-black">Retest due</span>
+            )}
+          </h2>
+          <p className="mb-4 mt-1 text-sm text-violet-200">Practise a live call with a witch customer and receive rubric feedback.</p>
           <MasteryBar score={mastery.cs?.score ?? null} label="Mastery" />
-        </div>
+        </Link>
       </div>
     </main>
   );
