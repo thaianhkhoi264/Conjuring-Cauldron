@@ -23,9 +23,10 @@ body {
 .cauldron-glow {
   position: absolute;
   inset: auto 0 0 0;
-  height: 50vh;
-  background: radial-gradient(ellipse 75% 100% at 50% 100%, rgba(16, 185, 129, 0.32), rgba(16, 185, 129, 0.1) 45%, transparent 72%);
-  animation: glow-pulse 6s ease-in-out infinite alternate;
+  height: 55vh;
+  background: radial-gradient(ellipse 75% 100% at 50% 100%, rgba(52, 255, 150, 0.4), rgba(16, 185, 129, 0.14) 45%, transparent 72%);
+  transform-origin: 50% 100%;
+  animation: glow-pulse 4.2s ease-in-out infinite alternate;
 }
 
 .bubble {
@@ -71,10 +72,12 @@ body {
 
 @keyframes glow-pulse {
   from {
-    opacity: 0.7;
+    opacity: 0.4;
+    transform: scale(0.92, 0.8);
   }
   to {
     opacity: 1;
+    transform: scale(1.08, 1.25);
   }
 }
 
@@ -110,6 +113,65 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .title-glow {
+    animation: none;
+  }
+}
+
+/* ---- Floating card (login) ---- */
+
+@property --sway {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 7px;
+}
+@property --tilt {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0.5deg;
+}
+@property --bob {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 5px;
+}
+
+/* Drifts side to side with a small bob, like it is floating. The size of the movement is a registered
+   property, so it eases between calm, floating and hovered instead of jumping. */
+.float-card {
+  animation: float-sway 7s ease-in-out infinite;
+  transition: --sway 0.7s ease, --tilt 0.7s ease, --bob 0.7s ease;
+  will-change: transform;
+}
+
+.float-card:hover {
+  --sway: 20px;
+  --tilt: 1.8deg;
+  --bob: 10px;
+}
+
+/* While someone is using the form, hold still so the dropdown and button are easy to hit. */
+.float-card:focus-within {
+  --sway: 0px;
+  --tilt: 0deg;
+  --bob: 0px;
+}
+
+@keyframes float-sway {
+  0%,
+  50%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(var(--sway), calc(var(--bob) * -1), 0) rotate(var(--tilt));
+  }
+  75% {
+    transform: translate3d(calc(var(--sway) * -1), calc(var(--bob) * -1), 0) rotate(calc(var(--tilt) * -1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-card {
     animation: none;
   }
 }

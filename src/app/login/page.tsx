@@ -23,11 +23,11 @@ export default async function LoginPage() {
       <main className="relative z-10 mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-7 p-8 text-center">
         <div className="flex flex-col items-center gap-3">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-300/80">A witch&apos;s café</p>
-          <h1 className="title-glow pb-1 text-5xl font-extrabold tracking-tight sm:text-6xl">Conjuring Cauldron</h1>
+          <h1 className="title-glow pb-3 pt-1 text-5xl font-extrabold leading-[1.2] tracking-tight sm:text-6xl">Conjuring Cauldron</h1>
           <p className="text-lg text-violet-100/90">Train. Evaluate. Schedule.</p>
         </div>
 
-        <div className="w-full max-w-sm rounded-2xl border border-emerald-300/25 bg-violet-950/55 p-6 shadow-[0_0_60px_-12px_rgba(16,185,129,0.45)] backdrop-blur-md">
+        <div className="float-card w-full max-w-sm rounded-2xl border border-emerald-300/25 bg-violet-950/55 p-6 shadow-[0_0_60px_-12px_rgba(16,185,129,0.45)] backdrop-blur-md">
           <p className="mb-4 text-sm text-violet-200">Demo login: pick a seeded account to explore the employee or manager view.</p>
           {accounts.length ? (
             <LoginForm accounts={accounts} />
