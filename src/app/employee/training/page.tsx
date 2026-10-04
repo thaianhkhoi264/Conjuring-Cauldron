@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MasteryBar } from "@/components/mastery-bar";
+import { getRetestsDue } from "@/lib/demo-clock";
 import { requireEmployee } from "@/lib/require-user";
 import { getMastery, STATION_LABELS } from "@/lib/training/data";
 
@@ -14,6 +15,7 @@ const chapters = [
 export default async function TrainingHub() {
   const user = await requireEmployee();
   const mastery = getMastery(user.id);
+  const retestStations = new Set(getRetestsDue(user.id).map((r) => r.station));
   const anyCertified = Object.values(mastery).some((m) => m && m.score >= 0.8);
 
   return (
@@ -36,7 +38,12 @@ export default async function TrainingHub() {
             href={`/employee/training/${station}`}
             className="rounded-lg border border-violet-400/40 bg-violet-950/40 p-5 hover:bg-violet-900/40"
           >
-            <h2 className="text-lg font-semibold">{STATION_LABELS[station]}</h2>
+            <h2 className="text-lg font-semibold">
+              {STATION_LABELS[station]}
+              {retestStations.has(station) && (
+                <span className="ml-2 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-black">Retest due</span>
+              )}
+            </h2>
             <p className="mb-4 mt-1 text-sm text-violet-200">{blurb}</p>
             <MasteryBar score={mastery[station]?.score ?? null} label="Mastery" />
           </Link>

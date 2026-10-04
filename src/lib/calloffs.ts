@@ -6,7 +6,7 @@ import { assignments, calloffCandidates, calloffs, employees, messages, shifts }
 import { currentDemoTime } from "@/lib/mastery";
 import { rankReplacements } from "@/lib/scheduling/engine";
 import { validateSchedule } from "@/lib/scheduling/rules";
-import { loadScheduleInput } from "@/lib/scheduling/store";
+import { loadActiveAssignments, loadScheduleInput } from "@/lib/scheduling/store";
 import type { EngineAssignment } from "@/lib/scheduling/types";
 import type { Station } from "@/lib/db/types";
 
@@ -36,16 +36,6 @@ function describeShift(date: string, slot: string) {
     timeZone: "UTC",
   });
   return `${day} ${SLOT_LABEL[slot] ?? slot}`;
-}
-
-/** The live schedule: only assignments that still count (not called off or already replaced). */
-function loadActiveAssignments(): EngineAssignment[] {
-  return db
-    .select()
-    .from(assignments)
-    .where(eq(assignments.status, "scheduled"))
-    .all()
-    .map((a) => ({ shiftId: a.shiftId, employeeId: a.employeeId, station: a.station, role: a.role }));
 }
 
 function notify(employeeIds: string[], kind: string, body: string, executor: Pick<typeof db, "insert"> = db) {
@@ -150,7 +140,7 @@ export function ensureCandidates(calloffId: string) {
   const input = loadScheduleInput();
   const ranked = rankReplacements(
     input,
-    loadActiveAssignments(),
+    loadActiveAssignments(input),
     { shiftId: ctx.shiftId, station: ctx.station },
     { exclude: [ctx.employeeId, ...existing.map((c) => c.employeeId)], limit: CANDIDATES_PER_ROUND },
   );
@@ -307,7 +297,7 @@ export function respondToOffer(candidateId: string, employeeId: string, accept: 
   // Re-check against the live schedule: things may have changed since the offer was made.
   const input = loadScheduleInput();
   const proposed: EngineAssignment = { shiftId: ctx.shiftId, employeeId, station: ctx.station, role: "anchor" };
-  const violations = validateSchedule(input, [...loadActiveAssignments(), proposed]).filter((v) => v.rule !== "coverage");
+  const violations = validateSchedule(input, [...loadActiveAssignments(input), proposed]).filter((v) => v.rule !== "coverage");
   if (violations.length > 0) {
     db.transaction((tx) => {
       tx.update(calloffCandidates).set({ status: "declined" }).where(eq(calloffCandidates.id, cand.id)).run();

@@ -3,19 +3,49 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { assignments, availability, employees, mastery, shifts } from "@/lib/db/schema";
 import type { StationRequirements } from "@/lib/db/types";
+import { currentDemoTime } from "@/lib/mastery";
 import { SLOT_HOURS } from "@/lib/slots";
 import { generateSchedule } from "./engine";
 import { buildScheduleInput } from "./input";
+import { validateSchedule } from "./rules";
+import { inWindow, missingShifts, planningWindow } from "./weeks";
 import type { EngineAssignment, ScheduleInput, ScheduleResult } from "./types";
 
-/** Load staff, skills, availability and open shifts from the database. */
+/** The 7 days after the demo "today". Shifts, hours and schedules are all scoped to it. */
+export function currentWindow() {
+  return planningWindow(currentDemoTime());
+}
+
+/** Make sure shifts exist through the end of the planning window (the week rolls forward with the demo clock). */
+export function ensureUpcomingShifts() {
+  const window = currentWindow();
+  const existing = db.select({ date: shifts.date }).from(shifts).all().map((s) => s.date);
+  const missing = missingShifts(existing, window.to);
+  if (missing.length) db.insert(shifts).values(missing).onConflictDoNothing().run();
+}
+
+/** Load staff, skills, availability and the shifts in the planning window. */
 export function loadScheduleInput(): ScheduleInput {
+  ensureUpcomingShifts();
+  const window = currentWindow();
   return buildScheduleInput({
     employees: db.select().from(employees).all(),
     mastery: db.select().from(mastery).all(),
     availability: db.select().from(availability).all(),
-    shifts: db.select().from(shifts).all(),
+    shifts: db.select().from(shifts).all().filter((s) => inWindow(s.date, window)),
   });
+}
+
+/** Saved assignments that still count (not called off or replaced) for the shifts in `input`. */
+export function loadActiveAssignments(input: ScheduleInput): EngineAssignment[] {
+  const shiftIds = new Set(input.shifts.map((s) => s.id));
+  return db
+    .select()
+    .from(assignments)
+    .where(eq(assignments.status, "scheduled"))
+    .all()
+    .filter((a) => shiftIds.has(a.shiftId))
+    .map((a) => ({ shiftId: a.shiftId, employeeId: a.employeeId, station: a.station, role: a.role }));
 }
 
 /**
@@ -60,6 +90,8 @@ export type ScheduleViewShift = {
 
 /** Saved schedule joined with employee names, grouped by shift. */
 export function getScheduleView(): ScheduleViewShift[] {
+  ensureUpcomingShifts();
+  const window = currentWindow();
   const names = new Map(db.select({ id: employees.id, name: employees.name }).from(employees).all().map((e) => [e.id, e.name]));
   const byShift = new Map<string, ScheduleViewShift["assignments"]>();
   for (const a of db.select().from(assignments).all()) {
@@ -79,6 +111,7 @@ export function getScheduleView(): ScheduleViewShift[] {
     .select()
     .from(shifts)
     .all()
+    .filter((s) => inWindow(s.date, window))
     .sort((a, b) => a.date.localeCompare(b.date) || ["open", "mid", "close"].indexOf(a.slot) - ["open", "mid", "close"].indexOf(b.slot))
     .map((s) => ({
       id: s.id,
@@ -108,8 +141,10 @@ export function getSkillMatrix(): SkillMatrixRow[] {
   const staff = db.select().from(employees).where(eq(employees.role, "employee")).all();
   const masteryRows = db.select().from(mastery).all();
   const hours = new Map<string, number>();
+  const window = currentWindow();
+  const inWindowIds = new Set(db.select().from(shifts).all().filter((s) => inWindow(s.date, window)).map((s) => s.id));
   for (const a of db.select().from(assignments).all()) {
-    if (a.status !== "scheduled") continue;
+    if (a.status !== "scheduled" || !inWindowIds.has(a.shiftId)) continue;
     hours.set(a.employeeId, (hours.get(a.employeeId) ?? 0) + SLOT_HOURS);
   }
   return staff
@@ -126,4 +161,24 @@ export function getSkillMatrix(): SkillMatrixRow[] {
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export type ScheduleHealth = {
+  /** Hard-rule problems in the saved schedule (for example someone is no longer certified). */
+  issues: string[];
+  /** Required anchor slots with nobody assigned. */
+  gaps: number;
+  hasSchedule: boolean;
+};
+
+/** Check the saved schedule against today's skills and availability. */
+export function getScheduleHealth(): ScheduleHealth {
+  const input = loadScheduleInput();
+  const active = loadActiveAssignments(input);
+  const violations = validateSchedule(input, active);
+  return {
+    hasSchedule: active.length > 0,
+    gaps: violations.filter((v) => v.rule === "coverage").length,
+    issues: violations.filter((v) => v.rule !== "coverage").map((v) => v.message),
+  };
 }

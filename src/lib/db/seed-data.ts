@@ -1,6 +1,6 @@
 import type { DemoSeed } from "./seed";
-import type { RecipeIngredients, ShiftSlot, Station, StationRequirements } from "./types";
-import { SLOT_TIMES } from "../slots";
+import type { RecipeIngredients, Station } from "./types";
+import { buildWeekShifts } from "../scheduling/weeks";
 
 /**
  * Deterministic demo content for Conjuring Cauldron: recipes, staff, skills,
@@ -154,30 +154,6 @@ function coaching(station: Station, score: number) {
   return `${area} needs more practice. Repeat the training chapter before taking solo shifts.`;
 }
 
-function buildShifts() {
-  const shifts: DemoSeed["shifts"] = [];
-  for (let offset = 0; offset < 7; offset++) {
-    const date = new Date(Date.parse(`${FIRST_SHIFT_DATE}T00:00:00.000Z`) + offset * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
-    const weekend = offset === 0 || offset === 6; // FIRST_SHIFT_DATE is a Sunday
-    const required: Record<ShiftSlot, StationRequirements> = {
-      open: { food: 1, drink: 1, cs: 0 }, // prep shift, the register opens at mid
-      mid: weekend ? { food: 2, drink: 1, cs: 1 } : { food: 1, drink: 1, cs: 1 },
-      close: { food: 1, drink: 1, cs: 1 },
-    };
-    for (const slot of Object.keys(SLOT_TIMES) as ShiftSlot[]) {
-      shifts.push({
-        id: `shift-${date}-${slot}`,
-        date,
-        slot,
-        requiredJson: JSON.stringify(required[slot]),
-      });
-    }
-  }
-  return shifts;
-}
-
 export function buildDemoSeed(): DemoSeed {
   const recipes = recipeDefs.map((r) => ({
     id: r.id,
@@ -260,7 +236,7 @@ export function buildDemoSeed(): DemoSeed {
     mastery,
     callSessions: [],
     attempts,
-    shifts: buildShifts(),
+    shifts: buildWeekShifts(FIRST_SHIFT_DATE),
     assignments: [],
     calloffs: [],
     calloffCandidates: [],
