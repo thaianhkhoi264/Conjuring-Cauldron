@@ -270,3 +270,125 @@ body {
     background-position-x: 1200px;
   }
 }
+
+/* ---- Quiet scenery for the pages after sign-in (see src/components/ambient-background.tsx) ---- */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The login bubbles, toned down: fewer, fainter, and the glow kept low. */
+.ambient .bubble-field {
+  position: absolute;
+  z-index: auto;
+  opacity: 0.4;
+}
+.ambient .bubble:nth-child(n + 15) {
+  display: none;
+}
+.ambient .cauldron-glow {
+  height: 38vh;
+}
+
+.ambient-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: #e9fff4;
+  box-shadow: 0 0 6px 1px rgba(167, 243, 208, 0.7);
+  opacity: 0.15;
+  animation: star-twinkle 5s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.12;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.25);
+  }
+}
+
+/* A shallow pool along the bottom, about a third of the screen, faint, that rises in when the page opens. */
+.ambient-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34vh;
+  opacity: 0.2;
+  animation: ambient-rise 2.2s cubic-bezier(0.25, 0.1, 0.2, 1) both;
+}
+
+.ambient-tide {
+  position: absolute;
+  inset: 0;
+  animation: tide 7s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-rise {
+  from {
+    transform: translateY(calc(100% + 100px));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes tide {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-14px);
+  }
+}
+
+/* ---- Small touches on every page ---- */
+
+/* Pages ease in instead of popping, which also helps the login water fade feel continuous. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+main {
+  animation: page-in 0.55s ease-out both;
+}
+
+/* Cards glow a little when pointed at. Colour only, so nothing shifts under the pointer. */
+main section {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+main section:hover {
+  border-color: rgba(110, 231, 183, 0.5);
+  box-shadow: 0 0 26px -10px rgba(52, 211, 153, 0.5);
+}
+
+/* Headings get the same soft green shimmer as the login title. */
+main > header h1 {
+  text-shadow: 0 0 22px rgba(52, 211, 153, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-star {
+    animation: none;
+    opacity: 0.4;
+  }
+  .ambient-water,
+  .ambient-tide,
+  main {
+    animation: none;
+  }
+}
