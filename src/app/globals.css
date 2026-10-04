@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Midnight violets: the app's purples, deeper and less saturated than Tailwind's defaults so the green
+   (the one bright accent) stands out. Light text shades (50-300) are kept close to the defaults. */
+@theme {
+  --color-violet-300: #c9bcf0;
+  --color-violet-400: #a496d6;
+  --color-violet-500: #8374bd;
+  --color-violet-600: #6c5ca3;
+  --color-violet-700: #574a8a;
+  --color-violet-800: #41376d;
+  --color-violet-900: #2e2652;
+  --color-violet-950: #1c1636;
+}
+
 :root {
   --background: #14101f;
   --foreground: #efe9ff;
@@ -232,7 +245,7 @@ body {
 .water-fill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, #34d399 0%, #10b981 14%, #059669 42%, #047857 72%, #064e3b 100%);
+  background: linear-gradient(to bottom, #2fd9b0 0%, #12bb94 14%, #0a9a7a 42%, #0b7a62 72%, #0a4f45 100%);
 }
 
 /* Three wave layers in different shades, flowing at different speeds, so the surface looks alive. */
@@ -248,20 +261,20 @@ body {
 .wave-back {
   top: -78px;
   opacity: 0.55;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%236ee7b7'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%2370e8c4'/%3E%3C/svg%3E");
   animation: wave-flow 9s linear infinite;
 }
 
 .wave-mid {
   top: -56px;
   opacity: 0.8;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%2310b981'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%2312bb94'/%3E%3C/svg%3E");
   animation: wave-flow 6s linear infinite reverse;
 }
 
 .wave-front {
   top: -34px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%2334d399'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 45 C200 5 400 5 600 45 S1000 85 1200 45 V90 H0 Z' fill='%232fd9b0'/%3E%3C/svg%3E");
   animation: wave-flow 4s linear infinite;
 }
 

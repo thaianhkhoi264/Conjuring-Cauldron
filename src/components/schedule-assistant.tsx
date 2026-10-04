@@ -115,7 +115,7 @@ export function ScheduleAssistant() {
           <div key={index} className={m.role === "user" ? "self-end" : "self-start"}>
             <div
               className={`max-w-prose whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
-                m.role === "user" ? "bg-violet-600 text-white" : "bg-violet-900/60"
+                m.role === "user" ? "bg-emerald-700 text-white" : "bg-violet-900/60"
               }`}
             >
               {m.text}
@@ -188,7 +188,7 @@ export function ScheduleAssistant() {
           placeholder="Ask about the schedule..."
           className="flex-1 rounded border border-violet-400/40 bg-violet-950/40 p-2 text-sm"
         />
-        <button type="submit" disabled={busy || !input.trim()} className="rounded bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-50">
+        <button type="submit" disabled={busy || !input.trim()} className="rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110 disabled:opacity-50">
           Send
         </button>
       </form>

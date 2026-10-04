@@ -74,7 +74,7 @@ export function EmployeeChatbot() {
           <p
             key={index}
             className={`max-w-prose whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
-              message.role === "employee" ? "self-end bg-violet-600 text-white" : "self-start bg-violet-900/60"
+              message.role === "employee" ? "self-end bg-emerald-700 text-white" : "self-start bg-violet-900/60"
             }`}
           >
             {message.text}
@@ -115,7 +115,7 @@ export function EmployeeChatbot() {
           placeholder="What is my schedule?"
           className="min-w-0 flex-1 rounded border border-violet-400/40 bg-violet-950/40 p-2 text-sm"
         />
-        <button disabled={loading || !draft.trim()} className="rounded bg-violet-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <button disabled={loading || !draft.trim()} className="rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:brightness-110 disabled:opacity-50">
           Send
         </button>
       </form>

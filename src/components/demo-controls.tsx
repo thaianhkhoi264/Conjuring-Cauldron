@@ -72,7 +72,7 @@ export function DemoControls({ demoDate }: { demoDate: string }) {
             type="button"
             disabled={busy !== null}
             onClick={() => run("skip")}
-            className="rounded bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-50"
+            className="rounded-lg bg-gradient-to-b from-emerald-300 to-emerald-500 px-4 py-2 font-semibold text-emerald-950 hover:brightness-110 disabled:opacity-50"
           >
             {busy === "skip" ? "Skipping..." : "Skip ahead 3 days"}
           </button>

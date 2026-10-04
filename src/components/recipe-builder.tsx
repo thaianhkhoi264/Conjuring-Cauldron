@@ -412,7 +412,7 @@ export function RecipeBuilder({ recipe, options, backHref, nextHref }: RecipeBui
           <div className="mt-5">
             <MasteryBar score={result.mastery.score} label={`${recipe.station === "drink" ? "Drinks" : "Food"} mastery`} />
             {result.mastery.certified && (
-              <p className="mt-2 text-sm text-emerald-300">✦ Certified! You can now be scheduled on this station.</p>
+              <p className="mt-2 text-sm text-amber-200">✦ Certified! You can now be scheduled on this station.</p>
             )}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">

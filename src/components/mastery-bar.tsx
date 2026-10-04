@@ -9,7 +9,7 @@ export function MasteryBar({ score, label }: { score: number | null; label?: str
       {label && (
         <div className="mb-1 flex justify-between text-xs">
           <span>{label}</span>
-          <span>{score === null ? "Not started" : certified ? `${percent}% certified` : `${percent}%`}</span>
+          <span>{score === null ? "Not started" : certified ? <span className="text-amber-200">{percent}% certified</span> : `${percent}%`}</span>
         </div>
       )}
       <div

@@ -47,7 +47,7 @@ export default async function ChapterPage({ params }: { params: Promise<{ statio
                 </span>
                 <span className="flex items-center gap-2 text-sm text-violet-200">
                   {entry && entry.best >= 0.8 && (
-                    <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-xs font-semibold text-emerald-200">✦ Certified</span>
+                    <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-xs font-semibold text-amber-200">✦ Certified</span>
                   )}
                   {entry ? `Best ${Math.round(entry.best * 100)}% · ${entry.count} tries` : "Not tried"}
                 </span>
