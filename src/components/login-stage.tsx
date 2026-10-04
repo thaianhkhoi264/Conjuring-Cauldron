@@ -23,7 +23,7 @@ export function useLoginStage() {
   return useContext(StageContext);
 }
 
-const DROPLETS = 30;
+const DROPLETS = 44;
 const THROW_MS = 900;
 /** How far through the toss the card touches the bottom of the screen (the rest is it sinking in). */
 const TOUCHDOWN = 0.8;
@@ -47,7 +47,7 @@ function burst(layer: HTMLElement, x: number, animations: Animation[]) {
   layer.querySelectorAll<HTMLElement>("[data-drop]").forEach((drop) => {
     const angle = (Math.random() - 0.5) * Math.PI * 0.95; // fan out to both sides
     const power = 0.45 + Math.random() * 0.55;
-    const dx = Math.sin(angle) * (160 + power * 460);
+    const dx = Math.sin(angle) * Math.max(280, window.innerWidth * (0.2 + power * 0.4)); // reaches well across the screen
     const rise = (0.3 + Math.random() * 0.7) * height * 0.55 * Math.cos(angle) + 70;
     const size = 6 + Math.pow(Math.random(), 1.6) * 20;
     const duration = 900 + Math.random() * 600;
@@ -77,7 +77,7 @@ function burst(layer: HTMLElement, x: number, animations: Animation[]) {
       ring.animate(
         [
           { transform: "scale(0.1)", opacity: 0.95 },
-          { transform: "scale(1.15)", opacity: 0 },
+          { transform: "scale(1.3)", opacity: 0 },
         ],
         { duration: 800, easing: "cubic-bezier(0.1, 0.7, 0.3, 1)", fill: "forwards" },
       ),

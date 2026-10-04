@@ -213,10 +213,10 @@ body {
 
 .splash-ring {
   position: absolute;
-  left: -230px;
-  bottom: -16px;
-  width: 460px;
-  height: 64px;
+  left: -450px;
+  bottom: -18px;
+  width: 900px;
+  height: 80px;
   border-radius: 50%;
   border: 3px solid rgba(110, 255, 170, 0.9);
   box-shadow: 0 0 26px rgba(52, 255, 150, 0.7), inset 0 0 22px rgba(52, 255, 150, 0.45);
